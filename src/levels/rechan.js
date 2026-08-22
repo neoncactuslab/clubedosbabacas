@@ -246,6 +246,266 @@ export var victoryDialogue = {
   }
 };
 
+// ---------- Boss secreto: Akio (irmão mais novo do Toyoshi) ----------
+// Aparece direto depois da vitória sobre o Toyoshi, sem trigger de área —
+// game.js chama isso quando level.createBoss2 existe.
+
+export var akioIntroDialogue = {
+  start: 'a1',
+  nodes: {
+    a1: {
+      speaker: 'Akio',
+      text: 'Eu não tô nem aí se você bateu no meu irmão, mas fiquei sabendo que você falou mal do Yasuo e isso eu não perdoo. Agora sofra! Hasagiii...',
+      next: null
+    }
+  }
+};
+
+const BASE_HP_2 = 120;
+const GOLPE_DMG = 10;
+const HASAGI_DMG = 15;
+
+export function createBoss2(level) {
+  return {
+    name: 'Akio',
+    x: 3150, y: GROUND_Y - 56, w: 36, h: 56, vx: 0, vy: 0, onGround: false,
+    facing: -1,
+    hp: enemyHpForLevel(BASE_HP_2, level),
+    maxHp: enemyHpForLevel(BASE_HP_2, level),
+    golpeDmg: enemyAttackForLevel(GOLPE_DMG, level),
+    hasagiDmg: enemyAttackForLevel(HASAGI_DMG, level),
+    state: 'approach',
+    stateTimer: 0,
+    actionCount: 0,
+    hitDone: false,
+    alive: true,
+    defeated: false,
+    asleep: true,
+    knockbackTimer: 0,
+    knockbackVx: 0
+  };
+}
+
+var TELEGRAPH_GOLPE = 0.25;
+var ACTIVE_GOLPE = 0.12;
+var RECOVER_GOLPE = 0.2;
+var TELEGRAPH_HASAGI = 0.4;
+var ACTIVE_HASAGI = 0.5;
+var RECOVER_HASAGI = 0.4;
+var FOLEGO_TIME = 1.5;
+var HASAGI_SPEED = 250;
+var APPROACH_SPEED_2 = 60;
+var ENGAGE_RANGE_2 = 75;
+
+function setState2(boss, state, duration) {
+  boss.state = state;
+  boss.stateTimer = duration;
+  boss.hitDone = false;
+}
+
+export function stepBoss2(boss, player, platforms, dt) {
+  if (!boss.alive || boss.asleep) return;
+
+  if (boss.stateTimer > 0) boss.stateTimer -= dt;
+  var playerCenter = player.x + player.w / 2;
+  var bossCenter = boss.x + boss.w / 2;
+  boss.facing = playerCenter < bossCenter ? -1 : 1;
+
+  switch (boss.state) {
+    case 'approach': {
+      var dist = Math.abs(playerCenter - bossCenter);
+      if (dist > ENGAGE_RANGE_2) {
+        boss.vx = boss.facing * APPROACH_SPEED_2;
+      } else {
+        boss.vx = 0;
+        boss.actionCount += 1;
+        if (boss.actionCount % 3 === 0) {
+          setState2(boss, 'folego', FOLEGO_TIME);
+        } else if (boss.actionCount % 2 === 1) {
+          setState2(boss, 'telegraph-golpe', TELEGRAPH_GOLPE);
+        } else {
+          setState2(boss, 'telegraph-hasagi', TELEGRAPH_HASAGI);
+        }
+      }
+      break;
+    }
+    case 'telegraph-golpe':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'active-golpe', ACTIVE_GOLPE);
+      break;
+    case 'active-golpe':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'recover-golpe', RECOVER_GOLPE);
+      break;
+    case 'recover-golpe':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'approach', 0);
+      break;
+    case 'telegraph-hasagi':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'active-hasagi', ACTIVE_HASAGI);
+      break;
+    case 'active-hasagi':
+      boss.vx = boss.facing * HASAGI_SPEED;
+      if (boss.stateTimer <= 0) setState2(boss, 'recover-hasagi', RECOVER_HASAGI);
+      break;
+    case 'recover-hasagi':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'approach', 0);
+      break;
+    case 'folego':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'approach', 0);
+      break;
+  }
+
+  if (boss.knockbackTimer > 0 && boss.state !== 'active-hasagi') {
+    boss.vx = boss.knockbackVx;
+    boss.knockbackTimer -= dt;
+  }
+
+  boss.vy += GRAVITY * dt;
+  if (boss.vy > MAX_FALL) boss.vy = MAX_FALL;
+  moveAndCollide(boss, platforms, boss.vx * dt, boss.vy * dt);
+  boss.x = clamp(boss.x, BOSS_ARENA_MIN_X, BOSS_ARENA_MAX_X - boss.w);
+}
+
+export function bossAttackHitbox2(boss) {
+  if (boss.state === 'active-golpe') {
+    var reach = 22;
+    var x = boss.facing > 0 ? boss.x + boss.w : boss.x - reach;
+    return { x: x, y: boss.y + 8, w: reach, h: boss.h - 20, damage: boss.golpeDmg, message: 'Golpe rápido!' };
+  }
+  if (boss.state === 'active-hasagi') {
+    return { x: boss.x, y: boss.y, w: boss.w, h: boss.h, damage: boss.hasagiDmg, message: 'Hasagiii!' };
+  }
+  return null;
+}
+
+export function bossDamageMultiplier2(boss) {
+  return boss.state === 'folego' ? 1.5 : 1;
+}
+
+export function hitBoss2(boss, damage, knockbackDir) {
+  if (!boss.alive) return;
+  boss.hp = Math.max(0, boss.hp - Math.round(damage * bossDamageMultiplier2(boss)));
+  if (boss.hp <= 0) {
+    boss.alive = false;
+    boss.defeated = true;
+    return;
+  }
+  if (knockbackDir) {
+    boss.knockbackVx = knockbackDir * BOSS_KNOCKBACK_SPEED;
+    boss.knockbackTimer = BOSS_KNOCKBACK_DURATION;
+  }
+}
+
+export function drawBoss2(ctx, b) {
+  if (!b.alive) return;
+  var winded = b.state === 'folego';
+  var cx = b.x + b.w / 2;
+  var baseY = b.y + b.h;
+
+  var skin = '#d9a878';
+  var shirt = '#26232b';
+  var pants = '#1c1a20';
+  var hair = '#0d0a0b';
+  var band = '#c1546a';
+
+  var walking = b.state === 'approach' && Math.abs(b.vx) > 5;
+  var strideB = walking ? Math.sin(b.x * 0.17) * 8 : 0;
+
+  ctx.save();
+  ctx.translate(cx, baseY);
+  ctx.scale(b.facing, 1);
+  if (winded) ctx.translate(0, -6); // curvado, mãos nos joelhos
+
+  // pernas
+  drawLimb(ctx, -9, -30, -10 + strideB, -2, 6, pants, null);
+  drawLimb(ctx, 7, -30, 8 - strideB, -2, 6, pants, null);
+  ctx.fillStyle = '#0d0a0b';
+  ctx.beginPath(); ctx.ellipse(-10 + strideB, -1, 5.5, 2.8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(8 - strideB, -1, 5.5, 2.8, 0, 0, Math.PI * 2); ctx.fill();
+
+  // bracos
+  if (winded) {
+    drawLimb(ctx, -9, -56, -16, -30, 6, skin, null);
+    drawLimb(ctx, 9, -56, 16, -30, 6, skin, null);
+  } else if (b.state === 'telegraph-hasagi') {
+    drawLimb(ctx, -9, -56, -18 + strideB * 0.4, -58, 6, skin, null);
+    drawLimb(ctx, 9, -56, 18 + strideB * 0.4, -58, 6, skin, null);
+  } else if (b.state === 'active-hasagi') {
+    drawLimb(ctx, -9, -56, 22, -56, 6, skin, null);
+    drawLimb(ctx, 9, -56, 26, -50, 6, skin, null);
+  } else if (b.state === 'active-golpe' || b.state === 'telegraph-golpe') {
+    var reach2 = b.state === 'active-golpe' ? 26 : 12;
+    drawLimb(ctx, -9, -56, -14 + strideB * 0.4, -34, 6, skin, null);
+    drawLimb(ctx, 9, -56, 10 + reach2, -50, 6, skin, null);
+  } else {
+    drawLimb(ctx, -9, -56, -14 + strideB * 0.4, -34, 6, skin, null);
+    drawLimb(ctx, 9, -56, 14 - strideB * 0.4, -34, 6, skin, null);
+  }
+
+  // tronco (camisa escura, postura ereta)
+  ctx.fillStyle = shirt;
+  roundRect(ctx, -9, -62, 18, 28, 4);
+  ctx.fill();
+
+  // cabeca
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(0, -70, 9, 0, Math.PI * 2); ctx.fill();
+
+  // cabelo espetado (diferente do irmao)
+  ctx.fillStyle = hair;
+  ctx.beginPath();
+  ctx.moveTo(-9, -74); ctx.lineTo(-6, -84); ctx.lineTo(-2, -75);
+  ctx.lineTo(1, -85); ctx.lineTo(4, -75); ctx.lineTo(8, -83); ctx.lineTo(9, -73);
+  ctx.arc(0, -74, 9, Math.PI * 1.98, Math.PI * 1.02, true);
+  ctx.closePath();
+  ctx.fill();
+
+  // faixa na testa
+  ctx.fillStyle = band;
+  ctx.fillRect(-9, -73, 18, 4);
+
+  // oculos (armacao preta grossa, igual a do irmao -- traco de familia)
+  ctx.strokeStyle = '#0d0a0b';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.arc(4, -70, 4, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(-4, -70, 4, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(8, -71); ctx.lineTo(11, -72); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-8, -71); ctx.lineTo(-11, -72); ctx.stroke();
+
+  // expressao serio (sem o nariz vermelho do Toyoshi)
+  ctx.strokeStyle = '#3a2a1f';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  if (b.state === 'active-hasagi' || b.state === 'telegraph-hasagi') {
+    ctx.moveTo(2, -63); ctx.lineTo(6, -61); ctx.lineTo(2, -60);
+  } else {
+    ctx.moveTo(2, -62); ctx.lineTo(6, -62);
+  }
+  ctx.stroke();
+
+  ctx.restore();
+
+  if (b.state.indexOf('active') === 0) {
+    ctx.strokeStyle = 'rgba(255,93,115,0.85)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx + b.facing * 30, baseY - 60, 13, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (winded) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('😤', cx - 8, baseY - 76);
+  }
+
+  drawMiniHpBar(ctx, b.x - 4, b.y - 14, b.w + 8, b.hp / b.maxHp, '#ff5d73');
+}
+
 // ---------- Cenário: entardecer no Rechan ----------
 
 export function renderBackground(ctx, camX, VIEW_W, VIEW_H) {

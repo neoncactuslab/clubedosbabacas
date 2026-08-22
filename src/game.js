@@ -47,6 +47,8 @@ var game = {
 function loadLevelEntities() {
   game.enemies = level.createEnemies(game.player.level);
   game.boss = level.createBoss(game.player.level);
+  game.bossApi = { step: level.stepBoss, attackHitbox: level.bossAttackHitbox, hit: level.hitBoss, draw: level.drawBoss };
+  game.boss2Spawned = false;
   game.checkpointX = 0;
   game.camX = 0;
   game.bossIntroDone = false;
@@ -54,6 +56,38 @@ function loadLevelEntities() {
   game.player.y = level.PLAYER_START.y;
   game.player.vx = 0;
   game.player.vy = 0;
+}
+
+// Alguns bosses vêm em dupla (ex: Akio aparece logo após o Toyoshi). Um
+// segundo boss só é ativado quando o nível exporta createBoss2 e cia.
+function spawnBoss2() {
+  game.boss2Spawned = true;
+  game.boss = level.createBoss2(game.player.level);
+  game.bossApi = { step: level.stepBoss2, attackHitbox: level.bossAttackHitbox2, hit: level.hitBoss2, draw: level.drawBoss2 };
+  updateHud();
+  game.phase = 'dialogue';
+  runDialogue(level.akioIntroDialogue, { name: game.player.name }, dialogueUi, function () {
+    game.boss.asleep = false;
+    game.phase = 'playing';
+  });
+}
+
+function finishLevel() {
+  var p = game.player;
+  levelUp(p);
+  updateHud();
+  document.getElementById('complete-level').textContent = p.level;
+  if (hasNextLevel()) {
+    completeTitle.textContent = level.LEVEL_NAME + ' foi conquistada!';
+    completeText.textContent = 'Bora pra próxima fase.';
+    btnCompleteRestart.textContent = 'Próxima fase';
+  } else {
+    completeTitle.textContent = 'Todos os Babacas (por enquanto) foram domados!';
+    completeText.textContent = 'Mais fases chegando em breve. Volte sempre pra treinar.';
+    btnCompleteRestart.textContent = 'Jogar novamente';
+  }
+  overlayComplete.hidden = false;
+  game.phase = 'complete';
 }
 
 function newRun(name) {
@@ -239,7 +273,7 @@ function step(dt) {
   }
 
   // boss
-  level.stepBoss(game.boss, p, level.platforms, dt);
+  game.bossApi.step(game.boss, p, level.platforms, dt);
   if (!game.bossIntroDone && p.x >= level.BOSS_ARENA_X - 20 && game.boss.asleep) {
     game.bossIntroDone = true;
     game.phase = 'dialogue';
@@ -251,7 +285,7 @@ function step(dt) {
   }
 
   if (!game.boss.asleep && game.boss.alive) {
-    var hb = level.bossAttackHitbox(game.boss);
+    var hb = game.bossApi.attackHitbox(game.boss);
     if (hb && !game.boss.hitDone && aabb(p.x, p.y, p.w, p.h, hb.x, hb.y, hb.w, hb.h)) {
       if (damagePlayer(p, hb.damage)) showToast(hb.message || 'Toma essa!');
       game.boss.hitDone = true;
@@ -273,7 +307,7 @@ function step(dt) {
     if (!p.attackHitDone && !game.boss.asleep && game.boss.alive &&
         aabb(atkBox.x, atkBox.y, atkBox.w, atkBox.h, game.boss.x, game.boss.y, game.boss.w, game.boss.h)) {
       var bossDir = (game.boss.x + game.boss.w / 2) >= (p.x + p.w / 2) ? 1 : -1;
-      level.hitBoss(game.boss, p.attack, bossDir);
+      game.bossApi.hit(game.boss, p.attack, bossDir);
       p.attackHitDone = true;
     }
   }
@@ -293,23 +327,17 @@ function step(dt) {
   }
 
   if (game.boss.defeated && game.phase === 'playing') {
+    if (game.boss2Spawned) {
+      // este boss.defeated é o segundo boss (ex: Akio) -- sem diálogo de vitória próprio
+      finishLevel();
+      return;
+    }
     game.phase = 'dialogue';
-    runDialogue(level.victoryDialogue, { name: p.name }, dialogueUi, function () {
-      levelUp(p);
-      updateHud();
-      document.getElementById('complete-level').textContent = p.level;
-      if (hasNextLevel()) {
-        completeTitle.textContent = level.LEVEL_NAME + ' foi conquistada!';
-        completeText.textContent = 'Bora pra próxima fase.';
-        btnCompleteRestart.textContent = 'Próxima fase';
-      } else {
-        completeTitle.textContent = 'Todos os Babacas (por enquanto) foram domados!';
-        completeText.textContent = 'Mais fases chegando em breve. Volte sempre pra treinar.';
-        btnCompleteRestart.textContent = 'Jogar novamente';
-      }
-      overlayComplete.hidden = false;
-      game.phase = 'complete';
-    });
+    if (level.createBoss2) {
+      runDialogue(level.victoryDialogue, { name: p.name }, dialogueUi, spawnBoss2);
+    } else {
+      runDialogue(level.victoryDialogue, { name: p.name }, dialogueUi, finishLevel);
+    }
     return;
   }
 
@@ -418,7 +446,7 @@ function render() {
 
   for (var g = 0; g < game.enemies.length; g++) level.drawGrunt(ctx, game.enemies[g]);
 
-  if (game.boss) level.drawBoss(ctx, game.boss);
+  if (game.boss) game.bossApi.draw(ctx, game.boss);
   if (game.player) drawPlayer(game.player);
 
   ctx.restore();

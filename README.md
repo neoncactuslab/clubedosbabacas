@@ -75,6 +75,11 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 3. Criar o boss: `createBoss(level)` + `stepBoss(...)` com a IA própria dele
    (siga o padrão de estados de `vilaRosa.js`/`rechan.js`: telegraph →
    active → recover, mais um estado "vulnerável" que cicla a cada 3ª ação).
+   Boss surpresa/duplo (tipo o Akio depois do Toyoshi): exporte também
+   `createBoss2`, `stepBoss2`, `bossAttackHitbox2`, `hitBoss2`, `drawBoss2` e
+   `akioIntroDialogue` (mesmo formato, nomes livres) — o `game.js` já detecta
+   `level.createBoss2` sozinho e encadeia os dois sem precisar de trigger de
+   área pro segundo.
 4. Escrever os diálogos (`introDialogue`, `preBossDialogue`,
    `victoryDialogue`) no formato de árvore usado por `dialogue.js`.
 5. Desenhar o visual da fase: `renderBackground(ctx, camX, VIEW_W, VIEW_H)`,
