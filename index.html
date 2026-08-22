@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Clube dos Babacas</title>
+<meta name="description" content="Clube dos Babacas — jogo de plataforma e RPG leve. Fase 1: Vila Rosa, contra o boss Pandoval.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Baloo+2:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="game-canvas" aria-label="Área de jogo: Clube dos Babacas"></canvas>
+</div>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="hud-left">
+    <div class="player-tag">
+      <span id="hud-name">Herói</span>
+      <span class="hud-level">Nv. <span id="hud-level">1</span></span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill hp" id="hud-hp-fill"></div>
+      <span class="bar-label"><span id="hud-hp-current">100</span>/<span id="hud-hp-max">100</span></span>
+    </div>
+  </div>
+  <div class="hud-right" id="boss-hud" hidden>
+    <div class="player-tag boss-tag">
+      <span id="hud-boss-name">Pandoval</span>
+    </div>
+    <div class="bar-track boss-track">
+      <div class="bar-fill boss-hp" id="hud-boss-fill"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Cuidado!</div>
+
+<!-- Diálogo -->
+<div class="dialogue-box" id="dialogue-box">
+  <div class="dialogue-speaker" id="dialogue-speaker">Nome</div>
+  <div class="dialogue-text" id="dialogue-text">Texto do diálogo aqui.</div>
+  <div class="dialogue-choices" id="dialogue-choices"></div>
+  <button class="dialogue-continue" id="dialogue-continue">Continuar ▸</button>
+</div>
+
+<!-- Controles de toque -->
+<div class="touch-controls">
+  <div class="touch-btn" id="btn-left" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M15 5L8 12L15 19" stroke="#2a2320" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+  <div class="touch-btn" id="btn-right" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M9 5L16 12L9 19" stroke="#2a2320" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+  <div class="touch-btn" id="btn-jump" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#2a2320" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+  <div class="touch-btn touch-btn-attack" id="btn-attack" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 20L14 10M14 10L11 10M14 10L14 13" stroke="#fff8ef" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14 10L20 4" stroke="#fff8ef" stroke-width="2.6" stroke-linecap="round"></path></svg></div>
+</div>
+
+<!-- Splash do estúdio -->
+<div class="overlay" id="overlay-splash">
+  <div class="splash">
+    <div class="splash-name">NEON CACTUS<br>INTERACTIVE</div>
+  </div>
+</div>
+
+<!-- Menu / criação de personagem -->
+<div class="overlay" id="overlay-menu" hidden>
+  <div class="panel">
+    <p class="eyebrow">Fase 1 · Vila Rosa</p>
+    <h1>Clube dos Babacas</h1>
+    <p>Um plataforma cômico com pancadaria corpo a corpo. Cada fase, um amigo. Cada amigo, um boss.</p>
+
+    <label class="field-label" for="name-input">Nome do seu personagem</label>
+    <input type="text" id="name-input" maxlength="16" placeholder="Digite seu nome" autocomplete="off">
+
+    <div class="controls-hint">
+      <div class="item"><span class="key">A</span><span class="key">D</span><span class="label">MOVER</span></div>
+      <div class="item"><span class="key">W</span><span class="label">PULAR</span></div>
+      <div class="item"><span class="key">ESPAÇO</span><span class="label">BATER</span></div>
+    </div>
+
+    <button class="cta" id="btn-start">Começar aventura</button>
+  </div>
+</div>
+
+<!-- Fim de fase -->
+<div class="overlay" id="overlay-complete" hidden>
+  <div class="panel">
+    <p class="eyebrow">Fase concluída</p>
+    <h1>Pandoval foi domado!</h1>
+    <div class="stat">Nível <span id="complete-level">2</span> alcançado</div>
+    <p>Mais fases (e mais Babacas) chegando em breve. Volte sempre à Vila Rosa pra treinar.</p>
+    <button class="cta" id="btn-complete-restart">Jogar novamente</button>
+  </div>
+</div>
+
+<!-- Derrota -->
+<div class="overlay" id="overlay-gameover" hidden>
+  <div class="panel">
+    <p class="eyebrow">Você apanhou demais</p>
+    <h1>Volte outro dia</h1>
+    <p>A Vila Rosa venceu essa rodada. Tenta de novo?</p>
+    <button class="cta" id="btn-gameover-restart">Tentar novamente</button>
+  </div>
+</div>
+
+<script type="module" src="src/game.js"></script>
+</body>
+</html>
