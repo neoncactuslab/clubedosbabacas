@@ -60,16 +60,43 @@ function loadLevelEntities() {
 
 // Alguns bosses vêm em dupla (ex: Akio aparece logo após o Toyoshi). Um
 // segundo boss só é ativado quando o nível exporta createBoss2 e cia.
+// Em vez de simplesmente aparecer, ele entra andando de fora da tela até
+// parar perto do jogador -- só então o diálogo dele começa.
+var ARRIVAL_SPEED = 95;
+
 function spawnBoss2() {
   game.boss2Spawned = true;
-  game.boss = level.createBoss2(game.player.level);
+  var p = game.player;
+  var boss = level.createBoss2(p.level);
+
+  // Começa fora da área visível (a pé da câmera não precisa respeitar o
+  // limite da arena aqui -- não há física/colisão durante a caminhada de
+  // entrada, só desliza; o limite da arena volta a valer quando a IA de
+  // combate liga, bem depois de ele já estar em posição segura).
+  var minX = level.BOSS_ARENA_MIN_X != null ? level.BOSS_ARENA_MIN_X : 0;
+  boss.x = game.camX + VIEW_W + 70;
+  boss.arriveTargetX = clamp(p.x + 130, minX, boss.x);
+  boss.vx = 0;
+
+  game.boss = boss;
   game.bossApi = { step: level.stepBoss2, attackHitbox: level.bossAttackHitbox2, hit: level.hitBoss2, draw: level.drawBoss2 };
   updateHud();
-  game.phase = 'dialogue';
-  runDialogue(level.akioIntroDialogue, { name: game.player.name }, dialogueUi, function () {
-    game.boss.asleep = false;
-    game.phase = 'playing';
-  });
+  game.phase = 'boss2-arriving';
+}
+
+function stepBossArrival(dt) {
+  var b = game.boss;
+  b.facing = -1;
+  b.vx = -ARRIVAL_SPEED;
+  b.x = Math.max(b.arriveTargetX, b.x - ARRIVAL_SPEED * dt);
+  if (b.x <= b.arriveTargetX) {
+    b.vx = 0;
+    game.phase = 'dialogue';
+    runDialogue(level.akioIntroDialogue, { name: game.player.name }, dialogueUi, function () {
+      game.boss.asleep = false;
+      game.phase = 'playing';
+    });
+  }
 }
 
 function finishLevel() {
@@ -252,6 +279,10 @@ var dialogueUi = {
 
 // ---------- Física / combate ----------
 function step(dt) {
+  if (game.phase === 'boss2-arriving') {
+    stepBossArrival(dt);
+    return;
+  }
   if (game.phase !== 'playing') return;
   game.t += dt;
 
