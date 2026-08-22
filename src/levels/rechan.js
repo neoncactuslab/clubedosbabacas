@@ -12,22 +12,27 @@ export const FALL_DAMAGE = 15;
 export const LEVEL_NAME = 'Rechan';
 export const LEVEL_NUMBER = 2;
 
-// Mesma geometria segura da Vila Rosa (chão praticamente contínuo, só dois
-// vãos pequenos de 60px) — o visual e as criaturas é que mudam.
+// Fase mais longa e variada que a Vila Rosa: mais trechos, mais inimigos, e
+// uma plataforma elevada extra pra dar outro ritmo — mas os vãos continuam
+// pequenos (60px) e a plataforma elevada tem chão contínuo por baixo, então
+// não existe risco de queda por errar um pulo mais ambicioso.
 export const platforms = [
-  { x: 0, y: GROUND_Y, w: 500, h: 80 },
-  { x: 560, y: GROUND_Y, w: 550, h: 80 },
-  { x: 1170, y: GROUND_Y, w: 1430, h: 80 }
+  { x: 0, y: GROUND_Y, w: 450, h: 80 },
+  { x: 510, y: GROUND_Y, w: 500, h: 80 },
+  { x: 1010, y: GROUND_Y, w: 750, h: 80 },
+  { x: 1140, y: 400, w: 140, h: 24 },
+  { x: 1820, y: GROUND_Y, w: 380, h: 80 },
+  { x: 2260, y: GROUND_Y, w: 1340, h: 80 }
 ];
 
-export const checkpoints = [0, 560, 1170];
+export const checkpoints = [0, 510, 1010, 1820, 2260];
 
-export const LEVEL_W = 2600;
+export const LEVEL_W = 3600;
 export const PLAYER_START = { x: 60, y: GROUND_Y - 200 };
 
-export const BOSS_ARENA_X = 2060;
-export const BOSS_ARENA_MIN_X = 2060;
-export const BOSS_ARENA_MAX_X = 2590;
+export const BOSS_ARENA_X = 2280;
+export const BOSS_ARENA_MIN_X = 2280;
+export const BOSS_ARENA_MAX_X = 3590;
 
 export var GRUNT_HIT_TOAST = 'Hic!';
 export var PLATFORM_FILL = '#5f5566';
@@ -36,12 +41,24 @@ export var PLATFORM_TOP = '#e0a458';
 export function createEnemies(level) {
   return [
     createGrunt({
-      name: 'Bêbado de Bar', x: 200, y: GROUND_Y - 40, w: 28, h: 40,
-      minX: 160, maxX: 400, speed: 50, baseHp: 25, baseAttack: 7
+      name: 'Bêbado de Bar', x: 180, y: GROUND_Y - 40, w: 28, h: 40,
+      minX: 140, maxX: 380, speed: 50, baseHp: 25, baseAttack: 7
     }, level),
     createGrunt({
-      name: 'Bêbado de Bar', x: 700, y: GROUND_Y - 40, w: 28, h: 40,
-      minX: 650, maxX: 950, speed: 55, baseHp: 25, baseAttack: 7
+      name: 'Bêbado de Bar', x: 650, y: GROUND_Y - 40, w: 28, h: 40,
+      minX: 590, maxX: 900, speed: 55, baseHp: 25, baseAttack: 7
+    }, level),
+    createGrunt({
+      name: 'Bêbado de Bar', x: 1180, y: 400 - 40, w: 28, h: 40,
+      minX: 1150, maxX: 1250, speed: 45, baseHp: 25, baseAttack: 7
+    }, level),
+    createGrunt({
+      name: 'Bêbado de Bar', x: 1350, y: GROUND_Y - 40, w: 28, h: 40,
+      minX: 1300, maxX: 1650, speed: 60, baseHp: 25, baseAttack: 7
+    }, level),
+    createGrunt({
+      name: 'Bêbado de Bar', x: 1900, y: GROUND_Y - 40, w: 28, h: 40,
+      minX: 1850, maxX: 2150, speed: 65, baseHp: 25, baseAttack: 7
     }, level)
   ];
 }
@@ -55,7 +72,7 @@ const ABRACO_DMG = 13;
 export function createBoss(level) {
   return {
     name: 'Toyoshi',
-    x: 2400, y: GROUND_Y - 54, w: 38, h: 54, vx: 0, vy: 0, onGround: false,
+    x: 3200, y: GROUND_Y - 46, w: 36, h: 46, vx: 0, vy: 0, onGround: false,
     facing: -1,
     hp: enemyHpForLevel(BASE_HP, level),
     maxHp: enemyHpForLevel(BASE_HP, level),
@@ -195,12 +212,12 @@ export function hitBoss(boss, damage, knockbackDir) {
 export var introDialogue = {
   start: 'n1',
   nodes: {
-    n1: { speaker: 'Narrador', text: 'Bairro do Rechan, Itapetininga. Perto do barzinho da esquina, mora o inseparável Toyoshi — capaz de te amar e te morder na mesma frase.', next: 'n2' },
+    n1: { speaker: 'Narrador', text: 'Chegamos no bairro do Rechan, nosso próximo inimigo será um pequeno e magro japonês que tem problemas com o alcoolismo. Mas não se iluda, Toyoshi pode se tornar violento a qualquer momento.', next: 'n2' },
     n2: {
-      speaker: '{name}', text: 'Hoje esse magrelo vai aprender a beber só água!',
+      speaker: '{name}', text: 'Hoje esse japonês bêbado vai levar uma surra!',
       choices: [
-        { label: 'Vamos com tudo!', next: null },
-        { label: 'Bora arrumar um caldo de cana pra ele!', next: null }
+        { label: 'A Rosana vai ficar viúva', next: null },
+        { label: 'Bora pro incubatório!', next: null }
       ]
     }
   }
@@ -209,12 +226,12 @@ export var introDialogue = {
 export var preBossDialogue = {
   start: 'p1',
   nodes: {
-    p1: { speaker: 'Toyoshi', text: 'Te amo mi amigo... mas também vo te morde!', next: 'p2' },
+    p1: { speaker: 'Toyoshi', text: 'Te amo mi amigo... Vo te morde!', next: 'p2' },
     p2: {
       speaker: '{name}', text: '',
       choices: [
-        { label: 'Para com isso, Toyoshi!', next: 'p3' },
-        { label: 'Foi você que pediu a última rodada, né?', next: 'p3' }
+        { label: 'Para de beber Toyo, agora você é pai!', next: 'p3' },
+        { label: 'Vem na mão, sem puxar revólver hein!', next: 'p3' }
       ]
     },
     p3: { speaker: 'Narrador', text: 'Toyoshi cambaleia pra frente, ajeitando os óculos, e o combate começa!', next: null }
@@ -224,7 +241,7 @@ export var preBossDialogue = {
 export var victoryDialogue = {
   start: 'v1',
   nodes: {
-    v1: { speaker: 'Toyoshi', text: 'Tá bom... (soluça) eu só queria mais uma rodada...', next: 'v2' },
+    v1: { speaker: 'Toyoshi', text: 'Chega de treta, vou tomar uma saidera e vou pra casa...', next: 'v2' },
     v2: { speaker: '{name}', text: 'Vamos para a próxima fase enfrentar o próximo babaca!', next: null }
   }
 };
@@ -356,6 +373,7 @@ export function drawBoss(ctx, b) {
   ctx.save();
   ctx.translate(cx + stumble, baseY);
   ctx.scale(b.facing, 1);
+  ctx.scale(1, 0.82); // Toyoshi é baixo -- comprime a figura toda em direção aos pés
   ctx.rotate(dizzy ? Math.sin(b.stateTimer * 10) * 0.08 : 0);
 
   // pernas finas
@@ -400,12 +418,15 @@ export function drawBoss(ctx, b) {
   ctx.fillStyle = '#c1546a';
   ctx.beginPath(); ctx.arc(6, -64, 1.6, 0, Math.PI * 2); ctx.fill();
 
-  // oculos
-  ctx.strokeStyle = '#20191a';
-  ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.arc(3, -67, 3.2, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(-4, -67, 3.2, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-0.8, -67); ctx.lineTo(-0.2, -67); ctx.stroke();
+  // oculos grandes, de armação preta e grossa (marca registrada dele)
+  ctx.strokeStyle = '#0d0a0b';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath(); ctx.arc(4, -67, 4.6, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(-5, -67, 4.6, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-0.4, -68); ctx.lineTo(-0.4, -66); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(8.5, -68); ctx.lineTo(11, -69); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-9.5, -68); ctx.lineTo(-11, -69); ctx.stroke();
 
   // boca: mordida durante o ataque
   ctx.strokeStyle = '#3a2a1f';
