@@ -229,14 +229,16 @@ function step(dt) {
     for (var j = 0; j < game.enemies.length; j++) {
       var ge = game.enemies[j];
       if (ge.alive && aabb(atkBox.x, atkBox.y, atkBox.w, atkBox.h, ge.x, ge.y, ge.w, ge.h)) {
-        hitGrunt(ge, p.attack);
+        var geDir = (ge.x + ge.w / 2) >= (p.x + p.w / 2) ? 1 : -1;
+        hitGrunt(ge, p.attack, geDir);
         p.attackHitDone = true;
         break;
       }
     }
     if (!p.attackHitDone && !game.boss.asleep && game.boss.alive &&
         aabb(atkBox.x, atkBox.y, atkBox.w, atkBox.h, game.boss.x, game.boss.y, game.boss.w, game.boss.h)) {
-      level.hitBoss(game.boss, p.attack);
+      var bossDir = (game.boss.x + game.boss.w / 2) >= (p.x + p.w / 2) ? 1 : -1;
+      level.hitBoss(game.boss, p.attack, bossDir);
       p.attackHitDone = true;
     }
   }

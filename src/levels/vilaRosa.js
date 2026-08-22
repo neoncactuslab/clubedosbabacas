@@ -63,9 +63,14 @@ export function createBoss(level) {
     hitDone: false,
     alive: true,
     defeated: false,
-    asleep: true
+    asleep: true,
+    knockbackTimer: 0,
+    knockbackVx: 0
   };
 }
+
+var BOSS_KNOCKBACK_SPEED = 180;
+var BOSS_KNOCKBACK_DURATION = 0.18;
 
 var TELEGRAPH_CHINELADA = 0.4;
 var ACTIVE_CHINELADA = 0.2;
@@ -140,6 +145,13 @@ export function stepBoss(boss, player, platforms, dt) {
       break;
   }
 
+  // Empurrão ao ser atingido: sobrepõe o movimento do estado, exceto durante
+  // a investida (não queremos cancelar a Barrigada Voadora no meio do golpe).
+  if (boss.knockbackTimer > 0 && boss.state !== 'active-barrigada') {
+    boss.vx = boss.knockbackVx;
+    boss.knockbackTimer -= dt;
+  }
+
   boss.vy += GRAVITY * dt;
   if (boss.vy > MAX_FALL) boss.vy = MAX_FALL;
   moveAndCollide(boss, platforms, boss.vx * dt, boss.vy * dt);
@@ -163,12 +175,17 @@ export function bossDamageMultiplier(boss) {
   return boss.state === 'preguica' ? 1.5 : 1;
 }
 
-export function hitBoss(boss, damage) {
+export function hitBoss(boss, damage, knockbackDir) {
   if (!boss.alive) return;
   boss.hp = Math.max(0, boss.hp - Math.round(damage * bossDamageMultiplier(boss)));
   if (boss.hp <= 0) {
     boss.alive = false;
     boss.defeated = true;
+    return;
+  }
+  if (knockbackDir) {
+    boss.knockbackVx = knockbackDir * BOSS_KNOCKBACK_SPEED;
+    boss.knockbackTimer = BOSS_KNOCKBACK_DURATION;
   }
 }
 
@@ -179,10 +196,10 @@ export var introDialogue = {
   nodes: {
     n1: { speaker: 'Narrador', text: 'Vila Rosa, Itapetininga. Em algum lugar por aqui mora o lendário Pandoval — chefão supremo da preguiça.', next: 'n2' },
     n2: {
-      speaker: '{name}', text: 'Cansei de ouvir esse cara zoando todo mundo no grupo. Hoje ele vai aprender.',
+      speaker: '{name}', text: 'Chegou a hora de dar uma surra nesse desempregado!',
       choices: [
         { label: 'Vamos com tudo!', next: null },
-        { label: 'Será que eu deveria ter treinado mais?', next: null }
+        { label: 'Vamos força-lo a entregar currículo!', next: null }
       ]
     }
   }
@@ -191,12 +208,12 @@ export var introDialogue = {
 export var preBossDialogue = {
   start: 'p1',
   nodes: {
-    p1: { speaker: 'Pandoval', text: 'Ô, {name}... intervalo do intervalo, po. Deixa eu descansar.', next: 'p2' },
+    p1: { speaker: 'Pandoval', text: 'Se você me bater, vai se ver com a Mariana depois!', next: 'p2' },
     p2: {
       speaker: '{name}', text: '',
       choices: [
-        { label: 'Levanta desse sofá, Pandoval!', next: 'p3' },
-        { label: 'Só vim entregar um salgado...', next: 'p3' }
+        { label: 'Vai arrumar um trampo, maluco!', next: 'p3' },
+        { label: 'Fiquei sabendo que tem vaga lá na Nishimbo, bora?', next: 'p3' }
       ]
     },
     p3: { speaker: 'Narrador', text: 'Pandoval se levanta, resmungando, e o combate começa!', next: null }
@@ -206,7 +223,7 @@ export var preBossDialogue = {
 export var victoryDialogue = {
   start: 'v1',
   nodes: {
-    v1: { speaker: 'Pandoval', text: 'Tá bom, tá bom! Eu admito, eu tava só de bobeira mesmo... Mariana que manda em casa de verdade.', next: 'v2' },
-    v2: { speaker: '{name}', text: 'Sobe de novo pro sofá, Pandoval. Valeu o treino.', next: null }
+    v1: { speaker: 'Pandoval', text: 'Você venceu, mas vou pedir a conta daqui a 2 meses no máximo...', next: 'v2' },
+    v2: { speaker: '{name}', text: 'Vamos para a próxima fase enfrentar o próximo babaca!', next: null }
   }
 };
