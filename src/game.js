@@ -1,5 +1,5 @@
 import { aabb, computeCamera, clamp } from './engine.js';
-import { createPlayer, levelUp, damagePlayer, playerAttackHitbox, stepPlayer } from './player.js';
+import { createPlayer, levelUp, damagePlayer, playerAttackHitbox, stepPlayer, ATTACK_DURATION } from './player.js';
 import { stepGrunt, hitGrunt } from './enemies.js';
 import { runDialogue } from './dialogue.js';
 import * as level from './levels/vilaRosa.js';
@@ -300,89 +300,272 @@ function drawHouseLayer(camFactor, baseY, wallColor, roofColor, seed, count) {
   }
 }
 
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawMiniHpBar(x, y, w, pct, color) {
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(x, y, w, 5);
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w * pct, 5);
+}
+
 function drawGrunt(g) {
   if (!g.alive) return;
+  var facing = g.vx >= 0 ? 1 : -1;
+  var cx = g.x + g.w / 2;
+  var baseY = g.y + g.h;
+  var moving = Math.abs(g.vx) > 5;
+  var strideRaw = Math.sin(g.x * 0.2);
+  var stride = moving ? strideRaw * 5 : 0;
+
+  ctx.save();
+  ctx.translate(cx, baseY);
+  ctx.scale(facing, 1);
+
+  // patas
+  ctx.strokeStyle = '#4a3626';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-8, -12); ctx.lineTo(-8 + stride, -1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(7, -12); ctx.lineTo(7 - stride, -1); ctx.stroke();
+
+  // rabo
+  ctx.strokeStyle = '#8a6a4f';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-11, -18);
+  ctx.quadraticCurveTo(-19, -22 + stride * 0.6, -16, -28);
+  ctx.stroke();
+
+  // corpo
   ctx.fillStyle = '#8a6a4f';
   ctx.beginPath();
-  ctx.ellipse(g.x + g.w / 2, g.y + g.h / 2 + 4, g.w / 2 + 4, g.h / 2 - 2, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -18, 15, 10, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  // cabeça
+  ctx.fillStyle = '#96755a';
+  ctx.beginPath();
+  ctx.arc(13, -22, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // focinho
+  ctx.fillStyle = '#6b4d38';
+  ctx.beginPath();
+  ctx.ellipse(19, -19, 4.5, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#2a2320';
+  ctx.beginPath(); ctx.arc(22, -19, 1.3, 0, Math.PI * 2); ctx.fill();
+
+  // orelhas
   ctx.fillStyle = '#5a4433';
   ctx.beginPath();
-  ctx.arc(g.x + (g.vx >= 0 ? g.w + 2 : -2), g.y + g.h / 2 - 6, 7, 0, Math.PI * 2);
-  ctx.fill();
-  // barra de vida mini
-  var pct = g.hp / g.maxHp;
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fillRect(g.x - 2, g.y - 12, g.w + 4, 5);
-  ctx.fillStyle = '#ff5d73';
-  ctx.fillRect(g.x - 2, g.y - 12, (g.w + 4) * pct, 5);
+  ctx.moveTo(8, -28); ctx.lineTo(6, -35); ctx.lineTo(13, -29); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(17, -29); ctx.lineTo(20, -36); ctx.lineTo(21, -28); ctx.closePath(); ctx.fill();
+
+  // olho
+  ctx.fillStyle = '#2a2320';
+  ctx.beginPath(); ctx.arc(15, -23, 1.4, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+
+  drawMiniHpBar(g.x - 2, g.y - 12, g.w + 4, g.hp / g.maxHp, '#ff5d73');
+}
+
+function drawBossLimb(x1, y1, x2, y2, width, color, footColor) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  if (footColor) {
+    ctx.fillStyle = footColor;
+    ctx.beginPath();
+    ctx.ellipse(x2 + (x2 > x1 ? 5 : -5), y2, 8, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function drawBoss(b) {
   if (!b.alive) return;
-  var squash = b.state === 'preguica' ? 0.55 : (b.state.indexOf('telegraph') === 0 ? 0.85 : 1);
-  var bw = b.w * (2 - squash);
-  var bh = b.h * squash;
-  var by = b.y + (b.h - bh);
+  var lying = b.state === 'preguica';
+  var squash = lying ? 0.7 : (b.state.indexOf('telegraph') === 0 ? 0.92 : 1);
+  var cx = b.x + b.w / 2;
+  var baseY = b.y + b.h;
+  var scaleY = squash;
 
-  ctx.fillStyle = b.state === 'preguica' ? '#c9a876' : '#d9b27c';
+  ctx.save();
+  ctx.translate(cx, baseY);
+  ctx.scale(b.facing, 1);
+  ctx.scale(1, scaleY);
+
+  var skin = '#c9986b';
+  var shirt = '#eee3c8';
+  var shorts = '#5a7a9c';
+  var sandal = '#3a2a1f';
+
+  // pernas curtas + chinelos
+  drawBossLimb(-12, -22, -14, -2, 9, skin, sandal);
+  drawBossLimb(9, -22, 12, -2, 9, skin, sandal);
+
+  // bracos (o da frente se estende no golpe de chinelada)
+  var armSwing = 0;
+  if (b.state === 'active-chinelada' || b.state === 'telegraph-chinelada') {
+    armSwing = b.state === 'telegraph-chinelada' ? -10 : 22;
+  }
+  drawBossLimb(-14, -46, -22, -30, 8, skin, null);
+  drawBossLimb(15, -46, 24 + armSwing, -34, 8, skin, sandal);
+
+  // barriga (a marca registrada)
+  ctx.fillStyle = shirt;
   ctx.beginPath();
-  ctx.ellipse(b.x + b.w / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -34, 24, 26, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.ellipse(0, -24, 19, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0, -24, 3, 0.2, Math.PI - 0.2); ctx.stroke();
+
+  // short
+  ctx.fillStyle = shorts;
+  ctx.beginPath();
+  ctx.ellipse(0, -14, 17, 9, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#3a2a1f';
-  var eyeX = b.x + b.w / 2 + b.facing * (bw / 2 - 10);
-  if (b.state !== 'preguica') {
-    ctx.beginPath();
-    ctx.arc(eyeX, by + bh * 0.35, 3.5, 0, Math.PI * 2);
-    ctx.fill();
+  // cabeca
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(3, -58, 11, 0, Math.PI * 2);
+  ctx.fill();
+
+  // careca com samambaia dos lados
+  ctx.fillStyle = '#4a3222';
+  ctx.beginPath(); ctx.arc(-3, -60, 5, Math.PI * 0.3, Math.PI * 1.1); ctx.fill();
+  ctx.beginPath(); ctx.arc(9, -60, 4, Math.PI * 1.7, Math.PI * 2.5); ctx.fill();
+
+  // bigode
+  ctx.strokeStyle = '#3a2a1f';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(4, -55); ctx.lineTo(10, -54); ctx.stroke();
+
+  // olhos (fechados durante a preguica)
+  ctx.strokeStyle = '#2a2320';
+  ctx.fillStyle = '#2a2320';
+  ctx.lineWidth = 1.8;
+  if (lying) {
+    ctx.beginPath(); ctx.moveTo(4, -60); ctx.lineTo(9, -60); ctx.stroke();
   } else {
-    ctx.strokeStyle = '#3a2a1f';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(eyeX - 5, by + bh * 0.35);
-    ctx.lineTo(eyeX + 5, by + bh * 0.35);
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(8, -60, 1.5, 0, Math.PI * 2); ctx.fill();
   }
+
+  ctx.restore();
 
   if (b.state.indexOf('active') === 0) {
     ctx.strokeStyle = 'rgba(255,93,115,0.85)';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(b.x + b.w / 2 + b.facing * bw * 0.6, by + bh / 2, 14, 0, Math.PI * 2);
+    ctx.arc(cx + b.facing * 34, baseY - 36 * scaleY, 13, 0, Math.PI * 2);
     ctx.stroke();
   }
-  if (b.state === 'preguica') {
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.font = '20px sans-serif';
-    ctx.fillText('💤', b.x + b.w / 2 - 10, by - 8);
+  if (lying) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '18px sans-serif';
+    ctx.fillText('💤', cx - 8, baseY - b.h * scaleY - 6);
   }
+
+  drawMiniHpBar(b.x - 4, b.y - 14, b.w + 8, b.hp / b.maxHp, '#ff5d73');
 }
 
 function drawPlayer(p) {
-  var px = p.x, py = p.y;
   var flash = p.invuln > 0 && Math.floor(p.invuln * 12) % 2 === 0;
-  ctx.fillStyle = flash ? 'rgba(255,255,255,0.5)' : '#3f6fb0';
-  var r = 8;
-  ctx.beginPath();
-  ctx.moveTo(px + r, py);
-  ctx.arcTo(px + p.w, py, px + p.w, py + p.h, r);
-  ctx.arcTo(px + p.w, py + p.h, px, py + p.h, r);
-  ctx.arcTo(px, py + p.h, px, py, r);
-  ctx.arcTo(px, py, px + p.w, py, r);
-  ctx.closePath();
-  ctx.fill();
+  var cx = p.x + p.w / 2;
+  var baseY = p.y + p.h;
 
-  ctx.fillStyle = '#ffe3ad';
-  ctx.beginPath();
-  ctx.arc(px + p.w / 2, py + 10, 8, 0, Math.PI * 2);
-  ctx.fill();
+  var skin = flash ? '#ffffff' : '#f2c49b';
+  var shirt = flash ? '#ffffff' : '#3f6fb0';
+  var pants = flash ? '#ffffff' : '#2c3e63';
+  var hair = flash ? '#ffffff' : '#4a3222';
 
-  if (p.attackTimer > 0) {
-    var hb = playerAttackHitbox(p);
-    ctx.fillStyle = 'rgba(255,93,115,0.55)';
-    if (hb) ctx.fillRect(hb.x, hb.y, hb.w, hb.h);
+  var moving = Math.abs(p.vx) > 10 && p.onGround;
+  var strideRaw = Math.sin(p.x * 0.18);
+  var stride = moving ? strideRaw * 7 : 0;
+
+  var atkProgress = p.attackTimer > 0 ? 1 - (p.attackTimer / ATTACK_DURATION) : 0;
+  var swing = Math.sin(Math.min(Math.max(atkProgress, 0), 1) * Math.PI);
+  var armAngle = -0.5 + swing * 1.9;
+  var shoulderX = 10, shoulderY = -30;
+  var armLen = 15;
+  var handX = shoulderX + Math.cos(armAngle) * armLen;
+  var handY = shoulderY + Math.sin(armAngle) * armLen;
+
+  ctx.save();
+  ctx.translate(cx, baseY);
+  ctx.scale(p.facing, 1);
+
+  // pernas
+  ctx.strokeStyle = pants;
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  if (!p.onGround) {
+    ctx.beginPath(); ctx.moveTo(-5, -14); ctx.lineTo(-8, -2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5, -14); ctx.lineTo(9, -4); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.moveTo(-5, -14); ctx.lineTo(-5 + stride, -1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5, -14); ctx.lineTo(5 - stride, -1); ctx.stroke();
   }
+
+  // braco de tras
+  ctx.strokeStyle = shirt;
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(-9, -28); ctx.lineTo(-13, -17); ctx.stroke();
+
+  // tronco
+  ctx.fillStyle = shirt;
+  roundRect(-11, -34, 22, 24, 6);
+  ctx.fill();
+
+  // braco da frente (soco)
+  ctx.strokeStyle = shirt;
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(handX, handY); ctx.stroke();
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(handX, handY, 4, 0, Math.PI * 2); ctx.fill();
+
+  // cabeca
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(0, -44, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = hair;
+  ctx.beginPath(); ctx.arc(0, -47, 10, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2a2320';
+  ctx.beginPath(); ctx.arc(4, -45, 1.5, 0, Math.PI * 2); ctx.fill();
+
+  // efeito de impacto na janela ativa do golpe
+  var hb = playerAttackHitbox(p);
+  if (hb) {
+    ctx.strokeStyle = 'rgba(255,93,115,0.9)';
+    ctx.lineWidth = 2.2;
+    for (var k = 0; k < 3; k++) {
+      var ang = -0.7 + k * 0.7;
+      ctx.beginPath();
+      ctx.moveTo(handX + Math.cos(ang) * 5, handY + Math.sin(ang) * 5);
+      ctx.lineTo(handX + Math.cos(ang) * 13, handY + Math.sin(ang) * 13);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
 }
 
 function render() {
