@@ -11,17 +11,16 @@ export const FALL_DAMAGE = 15;
 export const LEVEL_NAME = 'Vila Rosa';
 export const LEVEL_NUMBER = 1;
 
+// Mapa simplificado: só dois vãos pequenos (60px, folgados dentro do alcance
+// de pulo do jogador) e o resto é chão contínuo — sem plataformas elevadas
+// fora de alcance e sem risco de queda perto do boss.
 export const platforms = [
-  { x: 0, y: GROUND_Y, w: 420, h: 80 },
-  { x: 500, y: GROUND_Y, w: 320, h: 80 },
-  { x: 900, y: 380, w: 120, h: 26 },
-  { x: 1090, y: GROUND_Y, w: 360, h: 80 },
-  { x: 1500, y: 340, w: 110, h: 26 },
-  { x: 1660, y: GROUND_Y, w: 340, h: 80 },
-  { x: 2050, y: GROUND_Y, w: 550, h: 80 }
+  { x: 0, y: GROUND_Y, w: 500, h: 80 },
+  { x: 560, y: GROUND_Y, w: 550, h: 80 },
+  { x: 1170, y: GROUND_Y, w: 1430, h: 80 }
 ];
 
-export const checkpoints = [0, 500, 1090, 1660];
+export const checkpoints = [0, 560, 1170];
 
 export const LEVEL_W = 2600;
 export const PLAYER_START = { x: 60, y: GROUND_Y - 200 };
@@ -33,12 +32,12 @@ export const BOSS_ARENA_MAX_X = 2590;
 export function createEnemies(level) {
   return [
     createGrunt({
-      name: 'Cachorro do Bairro', x: 540, y: GROUND_Y - 34, w: 34, h: 34,
-      minX: 540, maxX: 780, speed: 70, baseHp: 30, baseAttack: 8
+      name: 'Cachorro do Bairro', x: 200, y: GROUND_Y - 34, w: 34, h: 34,
+      minX: 160, maxX: 400, speed: 70, baseHp: 30, baseAttack: 8
     }, level),
     createGrunt({
-      name: 'Cachorro do Bairro', x: 1150, y: GROUND_Y - 34, w: 34, h: 34,
-      minX: 1130, maxX: 1400, speed: 80, baseHp: 30, baseAttack: 8
+      name: 'Cachorro do Bairro', x: 700, y: GROUND_Y - 34, w: 34, h: 34,
+      minX: 650, maxX: 950, speed: 80, baseHp: 30, baseAttack: 8
     }, level)
   ];
 }

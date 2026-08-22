@@ -99,19 +99,26 @@ function showToast(msg) {
 // ---------- Input ----------
 var keys = { left: false, right: false, jump: false, attack: false };
 
+var GAME_KEYS = ['KeyA', 'KeyD', 'Space', 'Numpad1'];
+
+function isTypingTarget(el) {
+  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+}
+
 window.addEventListener('keydown', function (e) {
-  if (['KeyA', 'KeyD', 'KeyW', 'Space'].indexOf(e.code) !== -1) e.preventDefault();
+  if (isTypingTarget(document.activeElement)) return;
+  if (GAME_KEYS.indexOf(e.code) !== -1) e.preventDefault();
   if (e.code === 'KeyA') keys.left = true;
   if (e.code === 'KeyD') keys.right = true;
-  if (e.code === 'KeyW') keys.jump = true;
-  if (e.code === 'Space') keys.attack = true;
+  if (e.code === 'Space') keys.jump = true;
+  if (e.code === 'Numpad1') keys.attack = true;
 }, { passive: false });
 
 window.addEventListener('keyup', function (e) {
   if (e.code === 'KeyA') keys.left = false;
   if (e.code === 'KeyD') keys.right = false;
-  if (e.code === 'KeyW') keys.jump = false;
-  if (e.code === 'Space') keys.attack = false;
+  if (e.code === 'Space') keys.jump = false;
+  if (e.code === 'Numpad1') keys.attack = false;
 });
 
 function bindHold(el, onDown, onUp) {
