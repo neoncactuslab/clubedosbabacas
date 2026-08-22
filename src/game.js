@@ -412,17 +412,25 @@ function drawBoss(b) {
   var shorts = '#5a7a9c';
   var sandal = '#3a2a1f';
 
-  // pernas curtas + chinelos
-  drawBossLimb(-12, -22, -14, -2, 9, skin, sandal);
-  drawBossLimb(9, -22, 12, -2, 9, skin, sandal);
+  // gingado: pernas e bracos balancam enquanto ele anda ate o jogador
+  var walking = b.state === 'approach' && Math.abs(b.vx) > 5;
+  var strideB = walking ? Math.sin(b.x * 0.15) * 7 : 0;
+  var waddle = walking ? Math.abs(Math.sin(b.x * 0.15)) * 2 : 0;
+  ctx.translate(0, -waddle);
 
-  // bracos (o da frente se estende no golpe de chinelada)
+  // pernas curtas + chinelos (passada alternada ao caminhar)
+  drawBossLimb(-12, -22, -14 + strideB, -2, 9, skin, sandal);
+  drawBossLimb(9, -22, 12 - strideB, -2, 9, skin, sandal);
+
+  // bracos (o da frente se estende no golpe de chinelada; balancam ao andar)
   var armSwing = 0;
+  var chineladaHand = null;
   if (b.state === 'active-chinelada' || b.state === 'telegraph-chinelada') {
     armSwing = b.state === 'telegraph-chinelada' ? -10 : 22;
+    chineladaHand = sandal;
   }
-  drawBossLimb(-14, -46, -22, -30, 8, skin, null);
-  drawBossLimb(15, -46, 24 + armSwing, -34, 8, skin, sandal);
+  drawBossLimb(-14, -46, -22 - strideB * 0.6, -30, 8, skin, null);
+  drawBossLimb(15, -46, 24 + armSwing + strideB * 0.6, -34, 8, skin, chineladaHand);
 
   // barriga (a marca registrada)
   ctx.fillStyle = shirt;
