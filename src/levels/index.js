@@ -3,5 +3,6 @@
 import * as vilaRosa from './vilaRosa.js';
 import * as rechan from './rechan.js';
 import * as agropecuaria from './agropecuaria.js';
+import * as peruibe from './peruibe.js';
 
-export var LEVELS = [vilaRosa, rechan, agropecuaria];
+export var LEVELS = [vilaRosa, rechan, agropecuaria, peruibe];

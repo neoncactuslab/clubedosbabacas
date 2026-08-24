@@ -673,5 +673,5 @@ export function drawAlly(ctx, a) {
     ctx.fillText('💫', cx - 8, baseY - 60);
   }
 
-  drawMiniHpBar(ctx, a.x - 4, a.y - 14, a.w + 8, a.hp / a.maxHp, '#ffb347');
+  drawMiniHpBar(ctx, a.x - 4, a.y - 40, a.w + 8, a.hp / a.maxHp, '#ffb347');
 }

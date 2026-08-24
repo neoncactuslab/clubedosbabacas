@@ -503,7 +503,7 @@ export function drawBoss2(ctx, b) {
     ctx.fillText('😤', cx - 8, baseY - 76);
   }
 
-  drawMiniHpBar(ctx, b.x - 4, b.y - 14, b.w + 8, b.hp / b.maxHp, '#ff5d73');
+  drawMiniHpBar(ctx, b.x - 4, b.y - 40, b.w + 8, b.hp / b.maxHp, '#ff5d73');
 }
 
 // ---------- Cenário: entardecer no Rechan ----------
@@ -610,7 +610,7 @@ export function drawGrunt(ctx, g) {
 
   ctx.restore();
 
-  drawMiniHpBar(ctx, g.x - 2, g.y - 12, g.w + 4, g.hp / g.maxHp, '#ff5d73');
+  drawMiniHpBar(ctx, g.x - 2, g.y - 22, g.w + 4, g.hp / g.maxHp, '#ff5d73');
 }
 
 // ---------- Desenho: Toyoshi ----------
@@ -712,5 +712,5 @@ export function drawBoss(ctx, b) {
     ctx.fillText('💫', cx - 8, baseY - 78);
   }
 
-  drawMiniHpBar(ctx, b.x - 4, b.y - 14, b.w + 8, b.hp / b.maxHp, '#ff5d73');
+  drawMiniHpBar(ctx, b.x - 4, b.y - 30, b.w + 8, b.hp / b.maxHp, '#ff5d73');
 }

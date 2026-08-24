@@ -420,5 +420,5 @@ export function drawBoss(ctx, b) {
     ctx.fillText('💤', cx - 8, baseY - b.h * scaleY - 6);
   }
 
-  drawMiniHpBar(ctx, b.x - 4, b.y - 14, b.w + 8, b.hp / b.maxHp, '#ff5d73');
+  drawMiniHpBar(ctx, b.x - 4, b.y - 32, b.w + 8, b.hp / b.maxHp, '#ff5d73');
 }
