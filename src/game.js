@@ -95,7 +95,7 @@ function stepBossArrival(dt) {
   if (b.x <= b.arriveTargetX) {
     b.vx = 0;
     game.phase = 'dialogue';
-    runDialogue(level.akioIntroDialogue, { name: game.player.name }, dialogueUi, function () {
+    runDialogue(level.boss2IntroDialogue, { name: game.player.name }, dialogueUi, function () {
       game.boss.asleep = false;
       game.phase = 'playing';
     });

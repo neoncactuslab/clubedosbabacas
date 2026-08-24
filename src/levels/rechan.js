@@ -250,7 +250,7 @@ export var victoryDialogue = {
 // Aparece direto depois da vitória sobre o Toyoshi, sem trigger de área —
 // game.js chama isso quando level.createBoss2 existe.
 
-export var akioIntroDialogue = {
+export var boss2IntroDialogue = {
   start: 'a1',
   nodes: {
     a1: {

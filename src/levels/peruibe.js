@@ -224,19 +224,324 @@ export var preBossDialogue = {
     p2: {
       speaker: '{name}', text: '',
       choices: [
-        { label: 'Climão vai ser você apanhando!', next: 'p3' },
-        { label: 'Passa o boné e a essência, vamos resolver isso.', next: 'p3' }
+        { label: 'Você vai apanhar mais de mim do que da polícia!', next: 'p3' },
+        { label: 'Maconheiro safado!', next: 'p3' }
       ]
     },
     p3: { speaker: 'Narrador', text: 'Léo dá uma tragada bem funda e entra na dele... o combate começa!', next: null }
   }
 };
 
+// Depois de derrotar o Léo (e o Kannabis, se já tiver entrado na briga),
+// em vez de fechar a fase ele "ressuscita" com os poderes do Santo Daime
+// -- essa dialogue é o gatilho que o game.js usa pra chamar createBoss2.
 export var victoryDialogue = {
   start: 'v1',
   nodes: {
-    v1: { speaker: 'Léo Gobor', text: 'Aí mano... valeu a braba, hein... vou ali dar uma acalmada...', next: 'v2' },
-    v2: { speaker: '{name}', text: 'Vamos para a próxima fase enfrentar o próximo babaca!', next: null }
+    v1: { speaker: 'Narrador', text: 'Léo cai de joelhos na areia, derrotado... mas um brilho verde estranho começa a sair da pele dele!', next: 'v2' },
+    v2: { speaker: 'Léo Gobor', text: 'Vocês não sabiam? Eu guardava os poderes do Santo Daime pra emergência... e isso aqui é uma emergência!', next: 'v3' },
+    v3: { speaker: 'Narrador', text: 'Léo cresce, fica verde, rasga a camisa, e se levanta MAIOR e mais furioso do que nunca!', next: null }
+  }
+};
+
+// ---------- Aliado: Kannabis (Enrico) ----------
+// Entra na luta quando o Léo chega em 50% de vida, igual ao Escorrega na
+// Agropecuária.
+
+const ALLY_BASE_HP = 85;
+const TAPA_DMG = 9;
+const VOADORA_DMG = 14;
+
+export function createAlly(level) {
+  return {
+    name: 'Kannabis',
+    x: 3050, y: GROUND_Y - 54, w: 34, h: 54, vx: 0, vy: 0, onGround: false,
+    facing: -1,
+    hp: enemyHpForLevel(ALLY_BASE_HP, level),
+    maxHp: enemyHpForLevel(ALLY_BASE_HP, level),
+    tapaDmg: enemyAttackForLevel(TAPA_DMG, level),
+    voadoraDmg: enemyAttackForLevel(VOADORA_DMG, level),
+    state: 'approach',
+    stateTimer: 0,
+    actionCount: 0,
+    hitDone: false,
+    alive: true,
+    defeated: false,
+    asleep: true,
+    knockbackTimer: 0,
+    knockbackVx: 0
+  };
+}
+
+var TELEGRAPH_TAPA = 0.28;
+var ACTIVE_TAPA = 0.15;
+var RECOVER_TAPA = 0.25;
+var TELEGRAPH_VOADORA = 0.4;
+var ACTIVE_VOADORA = 0.35;
+var RECOVER_VOADORA = 0.4;
+var CHAPADO_TIME = 1.6;
+var VOADORA_SPEED = 250;
+var APPROACH_SPEED_A = 60;
+var ENGAGE_RANGE_A = 46;
+
+function setStateA(a, state, duration) {
+  a.state = state;
+  a.stateTimer = duration;
+  a.hitDone = false;
+}
+
+export function stepAlly(a, player, platforms, dt) {
+  if (!a.alive || a.asleep) return;
+
+  if (a.stateTimer > 0) a.stateTimer -= dt;
+  var playerCenter = player.x + player.w / 2;
+  var aCenter = a.x + a.w / 2;
+  a.facing = playerCenter < aCenter ? -1 : 1;
+
+  switch (a.state) {
+    case 'approach': {
+      var dist = Math.abs(playerCenter - aCenter);
+      if (dist > ENGAGE_RANGE_A) {
+        a.vx = a.facing * APPROACH_SPEED_A;
+      } else {
+        a.vx = 0;
+        a.actionCount += 1;
+        if (a.actionCount % 3 === 0) {
+          setStateA(a, 'chapado', CHAPADO_TIME);
+        } else if (a.actionCount % 2 === 1) {
+          setStateA(a, 'telegraph-tapa', TELEGRAPH_TAPA);
+        } else {
+          setStateA(a, 'telegraph-voadora', TELEGRAPH_VOADORA);
+        }
+      }
+      break;
+    }
+    case 'telegraph-tapa':
+      a.vx = 0;
+      if (a.stateTimer <= 0) setStateA(a, 'active-tapa', ACTIVE_TAPA);
+      break;
+    case 'active-tapa':
+      a.vx = 0;
+      if (a.stateTimer <= 0) setStateA(a, 'recover-tapa', RECOVER_TAPA);
+      break;
+    case 'recover-tapa':
+      a.vx = 0;
+      if (a.stateTimer <= 0) setStateA(a, 'approach', 0);
+      break;
+    case 'telegraph-voadora':
+      a.vx = 0;
+      if (a.stateTimer <= 0) setStateA(a, 'active-voadora', ACTIVE_VOADORA);
+      break;
+    case 'active-voadora':
+      a.vx = a.facing * VOADORA_SPEED;
+      if (a.stateTimer <= 0) setStateA(a, 'recover-voadora', RECOVER_VOADORA);
+      break;
+    case 'recover-voadora':
+      a.vx = 0;
+      if (a.stateTimer <= 0) setStateA(a, 'approach', 0);
+      break;
+    case 'chapado':
+      a.vx = 0;
+      if (a.stateTimer <= 0) setStateA(a, 'approach', 0);
+      break;
+  }
+
+  if (a.knockbackTimer > 0 && a.state !== 'active-voadora') {
+    a.vx = a.knockbackVx;
+    a.knockbackTimer -= dt;
+  }
+
+  a.vy += GRAVITY * dt;
+  if (a.vy > MAX_FALL) a.vy = MAX_FALL;
+  moveAndCollide(a, platforms, a.vx * dt, a.vy * dt);
+  a.x = clamp(a.x, BOSS_ARENA_MIN_X, BOSS_ARENA_MAX_X - a.w);
+}
+
+export function allyAttackHitbox(a) {
+  if (a.state === 'active-tapa') {
+    var reach = 24;
+    var x = a.facing > 0 ? a.x + a.w : a.x - reach;
+    return { x: x, y: a.y + 6, w: reach, h: a.h - 14, damage: a.tapaDmg, message: 'Tapa baseado!' };
+  }
+  if (a.state === 'active-voadora') {
+    return { x: a.x, y: a.y, w: a.w, h: a.h, damage: a.voadoraDmg, message: 'Voadora enfumaçada!' };
+  }
+  return null;
+}
+
+export function allyDamageMultiplier(a) {
+  return a.state === 'chapado' ? 1.5 : 1;
+}
+
+export function hitAlly(a, damage, knockbackDir) {
+  if (!a.alive) return;
+  a.hp = Math.max(0, a.hp - Math.round(damage * allyDamageMultiplier(a)));
+  if (a.hp <= 0) {
+    a.alive = false;
+    a.defeated = true;
+    return;
+  }
+  if (knockbackDir) {
+    a.knockbackVx = knockbackDir * BOSS_KNOCKBACK_SPEED;
+    a.knockbackTimer = BOSS_KNOCKBACK_DURATION;
+  }
+}
+
+export var allyJoinDialogue = {
+  start: 'k1',
+  nodes: {
+    k1: { speaker: 'Narrador', text: 'Um amigo aparece correndo pela areia pra ajudar o Léo! É o Kannabis!', next: 'k2' },
+    k2: { speaker: 'Kannabis', text: 'Ô mano, calma que eu tava aqui sonhando com uma anã bem gostosa... mas bora resolver essa parada primeiro!', next: null }
+  }
+};
+
+// ---------- Boss secreto: Léo Gobor Verde (poderes do Santo Daime) ----------
+// Aparece depois que o Léo original E o Kannabis já caíram -- mesmo padrão
+// sequencial do Akio no Rechan, só que aqui é o próprio Léo "ressuscitando".
+
+const BASE_HP_2 = 170;
+const CHICOTADA_DMG = 13;
+const INVESTIDA_DMG = 20;
+
+export function createBoss2(level) {
+  return {
+    name: 'Léo Gobor Verde',
+    x: 3050, y: GROUND_Y - 76, w: 48, h: 76, vx: 0, vy: 0, onGround: false,
+    facing: -1,
+    hp: enemyHpForLevel(BASE_HP_2, level),
+    maxHp: enemyHpForLevel(BASE_HP_2, level),
+    chicotadaDmg: enemyAttackForLevel(CHICOTADA_DMG, level),
+    investidaDmg: enemyAttackForLevel(INVESTIDA_DMG, level),
+    state: 'approach',
+    stateTimer: 0,
+    actionCount: 0,
+    hitDone: false,
+    alive: true,
+    defeated: false,
+    asleep: true,
+    knockbackTimer: 0,
+    knockbackVx: 0
+  };
+}
+
+var TELEGRAPH_CHICOTADA = 0.28;
+var ACTIVE_CHICOTADA = 0.16;
+var RECOVER_CHICOTADA = 0.26;
+var TELEGRAPH_INVESTIDA = 0.45;
+var ACTIVE_INVESTIDA = 0.45;
+var RECOVER_INVESTIDA = 0.45;
+var BAQUE_TIME = 1.6;
+var INVESTIDA_SPEED = 280;
+var APPROACH_SPEED_2 = 70;
+var ENGAGE_RANGE_2 = 58;
+
+function setState2(boss, state, duration) {
+  boss.state = state;
+  boss.stateTimer = duration;
+  boss.hitDone = false;
+}
+
+export function stepBoss2(boss, player, platforms, dt) {
+  if (!boss.alive || boss.asleep) return;
+
+  if (boss.stateTimer > 0) boss.stateTimer -= dt;
+  var playerCenter = player.x + player.w / 2;
+  var bossCenter = boss.x + boss.w / 2;
+  boss.facing = playerCenter < bossCenter ? -1 : 1;
+
+  switch (boss.state) {
+    case 'approach': {
+      var dist = Math.abs(playerCenter - bossCenter);
+      if (dist > ENGAGE_RANGE_2) {
+        boss.vx = boss.facing * APPROACH_SPEED_2;
+      } else {
+        boss.vx = 0;
+        boss.actionCount += 1;
+        if (boss.actionCount % 3 === 0) {
+          setState2(boss, 'baque', BAQUE_TIME);
+        } else if (boss.actionCount % 2 === 1) {
+          setState2(boss, 'telegraph-chicotada', TELEGRAPH_CHICOTADA);
+        } else {
+          setState2(boss, 'telegraph-investida', TELEGRAPH_INVESTIDA);
+        }
+      }
+      break;
+    }
+    case 'telegraph-chicotada':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'active-chicotada', ACTIVE_CHICOTADA);
+      break;
+    case 'active-chicotada':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'recover-chicotada', RECOVER_CHICOTADA);
+      break;
+    case 'recover-chicotada':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'approach', 0);
+      break;
+    case 'telegraph-investida':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'active-investida', ACTIVE_INVESTIDA);
+      break;
+    case 'active-investida':
+      boss.vx = boss.facing * INVESTIDA_SPEED;
+      if (boss.stateTimer <= 0) setState2(boss, 'recover-investida', RECOVER_INVESTIDA);
+      break;
+    case 'recover-investida':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'approach', 0);
+      break;
+    case 'baque':
+      boss.vx = 0;
+      if (boss.stateTimer <= 0) setState2(boss, 'approach', 0);
+      break;
+  }
+
+  if (boss.knockbackTimer > 0 && boss.state !== 'active-investida') {
+    boss.vx = boss.knockbackVx;
+    boss.knockbackTimer -= dt;
+  }
+
+  boss.vy += GRAVITY * dt;
+  if (boss.vy > MAX_FALL) boss.vy = MAX_FALL;
+  moveAndCollide(boss, platforms, boss.vx * dt, boss.vy * dt);
+  boss.x = clamp(boss.x, BOSS_ARENA_MIN_X, BOSS_ARENA_MAX_X - boss.w);
+}
+
+export function bossAttackHitbox2(boss) {
+  if (boss.state === 'active-chicotada') {
+    var reach = 40;
+    var x = boss.facing > 0 ? boss.x + boss.w : boss.x - reach;
+    return { x: x, y: boss.y + 10, w: reach, h: boss.h - 22, damage: boss.chicotadaDmg, message: 'Chicotada verde!' };
+  }
+  if (boss.state === 'active-investida') {
+    return { x: boss.x, y: boss.y, w: boss.w, h: boss.h, damage: boss.investidaDmg, message: 'Investida do Daime!' };
+  }
+  return null;
+}
+
+export function bossDamageMultiplier2(boss) {
+  return boss.state === 'baque' ? 1.5 : 1;
+}
+
+export function hitBoss2(boss, damage, knockbackDir) {
+  if (!boss.alive) return;
+  boss.hp = Math.max(0, boss.hp - Math.round(damage * bossDamageMultiplier2(boss)));
+  if (boss.hp <= 0) {
+    boss.alive = false;
+    boss.defeated = true;
+    return;
+  }
+  if (knockbackDir) {
+    boss.knockbackVx = knockbackDir * BOSS_KNOCKBACK_SPEED;
+    boss.knockbackTimer = BOSS_KNOCKBACK_DURATION;
+  }
+}
+
+export var boss2IntroDialogue = {
+  start: 'h1',
+  nodes: {
+    h1: { speaker: 'Léo Gobor Verde', text: 'AGORA A ESSÊNCIA... É OUTRA!', next: null }
   }
 };
 
@@ -450,5 +755,196 @@ export function drawBoss(ctx, b) {
     ctx.fillText('🌀', cx - 8, baseY - 96);
   }
 
-  drawMiniHpBar(ctx, b.x - 4, b.y - 34, b.w + 8, b.hp / b.maxHp, '#ff5d73');
+  drawMiniHpBar(ctx, b.x - 4, b.y - 48, b.w + 8, b.hp / b.maxHp, '#ff5d73');
+}
+
+// ---------- Desenho: Kannabis (Enrico) ----------
+
+export function drawAlly(ctx, a) {
+  if (!a.alive) return;
+  var chapado = a.state === 'chapado';
+  var cx = a.x + a.w / 2;
+  var baseY = a.y + a.h;
+
+  var skin = '#c9986b';
+  var shirt = '#4a8f3c';
+  var pants = '#c9a458';
+  var bandana = '#e0c23a';
+
+  var walking = a.state === 'approach' && Math.abs(a.vx) > 5;
+  var strideA = walking ? Math.sin(a.x * 0.16) * 7 : 0;
+  var sway = chapado ? Math.sin(a.stateTimer * 5) * 4 : 0;
+
+  ctx.save();
+  ctx.translate(cx + sway, baseY);
+  ctx.scale(a.facing, 1);
+
+  // pernas
+  drawLimb(ctx, -8, -28, -9 + strideA, -2, 6, pants, '#20191a');
+  drawLimb(ctx, 7, -28, 8 - strideA, -2, 6, pants, '#20191a');
+
+  // bracos
+  if (a.state === 'telegraph-tapa' || a.state === 'active-tapa') {
+    var slap = a.state === 'active-tapa' ? 22 : 8;
+    drawLimb(ctx, -8, -50, -13 + strideA * 0.4, -30, 6, skin, null);
+    drawLimb(ctx, 8, -50, 12 + slap, -44, 6, skin, null);
+  } else if (a.state === 'active-voadora') {
+    drawLimb(ctx, -8, -50, -20, -46, 6, skin, null);
+    drawLimb(ctx, 8, -50, 20, -46, 6, skin, null);
+  } else {
+    drawLimb(ctx, -8, -50, -12 + strideA * 0.4, -30, 6, skin, null);
+    drawLimb(ctx, 8, -50, 12 - strideA * 0.4, -30, 6, skin, null);
+  }
+
+  // tronco (camisa rasta, meio caida)
+  ctx.fillStyle = shirt;
+  roundRect(ctx, -8, -54, 16, 26, 4);
+  ctx.fill();
+  ctx.fillStyle = '#c1462a';
+  ctx.fillRect(-8, -40, 16, 3);
+
+  // cabeca
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(0, -60, 8, 0, Math.PI * 2); ctx.fill();
+
+  // dreads saindo por baixo da bandana
+  ctx.strokeStyle = '#1c1410';
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  for (var d = -1; d <= 1; d++) {
+    ctx.beginPath(); ctx.moveTo(d * 5, -63); ctx.lineTo(d * 6, -54 + Math.abs(d) * 2); ctx.stroke();
+  }
+
+  // bandana
+  ctx.fillStyle = bandana;
+  ctx.beginPath(); ctx.arc(0, -64, 8.5, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
+
+  // barbicha rala
+  ctx.strokeStyle = '#3a2b1c';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(-1, -55); ctx.lineTo(1, -53); ctx.stroke();
+
+  // olhos bem caidos (chapadao)
+  ctx.strokeStyle = '#2a2320';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(2, -60); ctx.lineTo(5.5, -59.5); ctx.stroke();
+
+  // baseadinho proprio
+  ctx.fillStyle = '#f4efe4';
+  ctx.fillRect(7, -58, 8, 2.2);
+  ctx.fillStyle = '#c1462a';
+  ctx.fillRect(15, -58, 1.8, 2.2);
+
+  ctx.restore();
+
+  // fumaca -- o Kannabis tambem sempre ta com uma nuvenzinha
+  var smokeTA = performance.now() / 450;
+  var mouthXA = cx + a.facing * 17;
+  var mouthYA = baseY - 58;
+  ctx.strokeStyle = 'rgba(230,230,230,0.5)';
+  ctx.lineWidth = 2.6;
+  ctx.lineCap = 'round';
+  for (var k = 0; k < 2; k++) {
+    var tA = (smokeTA + k * 0.7) % 1.6;
+    var sxA = mouthXA + a.facing * tA * 12 + Math.sin(tA * 4 + k) * 4;
+    var syA = mouthYA - tA * 18;
+    ctx.beginPath();
+    ctx.arc(sxA, syA, 2 + tA * 2.4, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (a.state.indexOf('active') === 0) {
+    ctx.strokeStyle = 'rgba(255,93,115,0.85)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx + a.facing * 28, baseY - 44, 12, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (chapado) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('💭', cx - 7, baseY - 78);
+  }
+
+  drawMiniHpBar(ctx, a.x - 3, a.y - 30, a.w + 6, a.hp / a.maxHp, '#ff5d73');
+}
+
+// ---------- Desenho: Léo Gobor Verde ----------
+
+export function drawBoss2(ctx, b) {
+  if (!b.alive) return;
+  var dazed = b.state === 'baque';
+  var cx = b.x + b.w / 2;
+  var baseY = b.y + b.h;
+
+  var skin = '#4a8f3c';
+  var shirtTear = '#e0704a';
+  var shorts = '#2a5a3a';
+  var capColor = '#2f5f8a';
+
+  var walking = b.state === 'approach' && Math.abs(b.vx) > 5;
+  var strideB2 = walking ? Math.sin(b.x * 0.13) * 10 : 0;
+  var sway2 = dazed ? Math.sin(b.stateTimer * 5) * 6 : 0;
+
+  ctx.save();
+  ctx.translate(cx + sway2, baseY);
+  ctx.scale(b.facing, 1);
+
+  // pernas grossas
+  drawLimb(ctx, -13, -44, -15 + strideB2, -2, 11, shorts, '#20191a');
+  drawLimb(ctx, 12, -44, 14 - strideB2, -2, 11, shorts, '#20191a');
+
+  // bracos enormes
+  var reachOut2 = 0;
+  if (b.state === 'telegraph-chicotada') reachOut2 = 10;
+  if (b.state === 'active-chicotada') reachOut2 = 38;
+  drawLimb(ctx, -14, -84, -20 + strideB2 * 0.4, -50, 10, skin, null);
+  drawLimb(ctx, 14, -84, 22 + reachOut2, -70, 10, skin, null);
+
+  // tronco largo (camisa rasgada de tanto crescer)
+  ctx.fillStyle = shirtTear;
+  roundRect(ctx, -14, -90, 28, 42, 6);
+  ctx.fill();
+  // rasgo mostrando a barriga verde
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.moveTo(-4, -80); ctx.lineTo(2, -68); ctx.lineTo(-2, -56); ctx.lineTo(-8, -66); ctx.closePath();
+  ctx.fill();
+
+  // cabeca
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(0, -102, 13, 0, Math.PI * 2); ctx.fill();
+
+  // bone minusculo -- comicamente pequeno pra cabeca gigante agora
+  ctx.fillStyle = capColor;
+  ctx.beginPath(); ctx.arc(0, -113, 5, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(4, -113, 4.4, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+
+  // bigode -- continuidade com o Leo original
+  ctx.strokeStyle = '#20140a';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(3, -97); ctx.lineTo(12, -95.5); ctx.stroke();
+
+  // olhos furiosos
+  ctx.strokeStyle = '#1a1210';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(2, -105); ctx.lineTo(8, -108); ctx.stroke();
+
+  ctx.restore();
+
+  if (b.state.indexOf('active') === 0) {
+    ctx.strokeStyle = 'rgba(255,93,115,0.85)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx + b.facing * 46, baseY - 64, 17, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (dazed) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '20px sans-serif';
+    ctx.fillText('💫', cx - 9, baseY - 122);
+  }
+
+  drawMiniHpBar(ctx, b.x - 5, b.y - 54, b.w + 10, b.hp / b.maxHp, '#ff5d73');
 }
