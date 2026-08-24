@@ -348,6 +348,56 @@ button.cta:focus-visible { outline: 3px solid var(--neon); outline-offset: 3px; 
   button.cta { transition: none; }
 }
 
+/* Link secundário (usado hoje só pelo seletor de fase de teste) */
+button.link-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  background: none;
+  border: none;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+button.link-btn:hover { color: var(--accent); }
+button.link-btn:focus-visible { outline: 3px solid var(--neon); outline-offset: 2px; }
+
+.level-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.level-select-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.level-select-btn:hover { background: var(--accent-soft); transform: translateX(2px); }
+.level-select-btn:focus-visible { outline: 3px solid var(--neon); outline-offset: 2px; }
+.level-select-btn .lvl-num {
+  font-family: 'Bungee', sans-serif;
+  font-size: 12px;
+  color: var(--accent);
+}
+
 /* Controles de toque */
 .touch-controls { position: fixed; inset: 0; pointer-events: none; z-index: 5; display: none; }
 @media (hover: none) and (pointer: coarse) {

@@ -280,6 +280,7 @@ function showMenu() {
   overlaySplash.hidden = true;
   overlayComplete.hidden = true;
   overlayGameover.hidden = true;
+  document.getElementById('overlay-level-select').hidden = true;
   overlayMenu.hidden = false;
 }
 
@@ -292,6 +293,44 @@ function startAdventure() {
   var name = nameInput.value.trim() || 'Herói';
   overlayMenu.hidden = true;
   newRun(name);
+  game.phase = 'dialogue';
+  runDialogue(level.introDialogue, { name: name }, dialogueUi, function () {
+    game.phase = 'playing';
+  });
+}
+
+// ---------- Seletor de fase (TEMPORÁRIO — só pra testes durante o
+// desenvolvimento; remover este bloco + os elementos correspondentes em
+// index.html/style.css quando o jogo estiver pronto) ----------
+var overlayLevelSelect = document.getElementById('overlay-level-select');
+var levelSelectList = document.getElementById('level-select-list');
+
+LEVELS.forEach(function (lvl, idx) {
+  var btn = document.createElement('button');
+  btn.className = 'level-select-btn';
+  btn.innerHTML = '<span>' + lvl.LEVEL_NAME + '</span><span class="lvl-num">FASE ' + (idx + 1) + '</span>';
+  btn.addEventListener('click', function () { startAtLevel(idx); });
+  levelSelectList.appendChild(btn);
+});
+
+document.getElementById('btn-open-level-select').addEventListener('click', function () {
+  overlayMenu.hidden = true;
+  overlayLevelSelect.hidden = false;
+});
+document.getElementById('btn-close-level-select').addEventListener('click', function () {
+  overlayLevelSelect.hidden = true;
+  overlayMenu.hidden = false;
+});
+
+function startAtLevel(idx) {
+  var name = nameInput.value.trim() || 'Herói';
+  overlayLevelSelect.hidden = true;
+  levelIndex = idx;
+  level = LEVELS[levelIndex];
+  game.player = createPlayer(name, level.PLAYER_START.x, level.PLAYER_START.y);
+  for (var i = 0; i < idx; i++) levelUp(game.player);
+  loadLevelEntities();
+  updateHud();
   game.phase = 'dialogue';
   runDialogue(level.introDialogue, { name: name }, dialogueUi, function () {
     game.phase = 'playing';

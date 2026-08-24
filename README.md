@@ -13,6 +13,14 @@ o nome).
 mesmo que leve uma semana por fase. Não é pra ser um jogo longo: o alvo é
 10-15 fases no total.
 
+> **TODO antes de considerar o jogo "pronto":** o menu tem um botão
+> "🧪 Testar uma fase específica" que pula direto pra qualquer fase (com o
+> personagem já no nível certo), só pra agilizar testes durante o
+> desenvolvimento. Remover antes do lançamento: em `index.html` o botão
+> `#btn-open-level-select` e o overlay `#overlay-level-select`; em
+> `style.css` as regras `.link-btn`/`.level-select-*`; em `src/game.js` o
+> bloco marcado "Seletor de fase (TEMPORÁRIO...)".
+
 ## Como jogar
 
 - **A / D** — mover para os lados
