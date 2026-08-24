@@ -215,7 +215,7 @@ export function hitBoss(boss, damage, knockbackDir) {
 export var introDialogue = {
   start: 'n1',
   nodes: {
-    n1: { speaker: 'Narrador', text: 'Sorocaba, interior de São Paulo. No centro da cidade, um prédio de vidro espelhado esconde a sede da Suprema Poker — mesas cheias de monitores, moletons de marca e um cheiro forte de café requentado.', next: 'n2' },
+    n1: { speaker: 'Narrador', text: 'Sorocaba, interior de São Paulo. No centro da cidade, um prédio de vidro espelhado esconde a sede da Suprema Poker — mesas cheias de monitores e um cheiro forte de café requentado.', next: 'n2' },
     n2: {
       speaker: '{name}', text: 'Fiquei sabendo que essa empresa é um ninho de babacas!',
       choices: [

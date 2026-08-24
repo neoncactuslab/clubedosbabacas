@@ -766,10 +766,10 @@ export function drawAlly(ctx, a) {
   var cx = a.x + a.w / 2;
   var baseY = a.y + a.h;
 
-  var skin = '#c9986b';
-  var shirt = '#4a8f3c';
+  var skin = '#e8c9a8';
+  var shirt = '#f2f4f6';
   var pants = '#c9a458';
-  var bandana = '#e0c23a';
+  var hair = '#100d0a';
 
   var walking = a.state === 'approach' && Math.abs(a.vx) > 5;
   var strideA = walking ? Math.sin(a.x * 0.15) * 8 : 0;
@@ -795,28 +795,18 @@ export function drawAlly(ctx, a) {
     drawLimb(ctx, 10, -66, 16 + slap, -60, 6, skin, null);
   }
 
-  // tronco (camisa rasta, meio caida)
+  // tronco (camiseta branca)
   ctx.fillStyle = shirt;
   roundRect(ctx, -9, -70, 18, 32, 5);
   ctx.fill();
-  ctx.fillStyle = '#c1462a';
-  ctx.fillRect(-9, -52, 18, 3);
 
   // cabeca
   ctx.fillStyle = skin;
   ctx.beginPath(); ctx.arc(0, -80, 9, 0, Math.PI * 2); ctx.fill();
 
-  // dreads saindo por baixo da bandana
-  ctx.strokeStyle = '#1c1410';
-  ctx.lineWidth = 2.4;
-  ctx.lineCap = 'round';
-  for (var d = -1; d <= 1; d++) {
-    ctx.beginPath(); ctx.moveTo(d * 6, -83); ctx.lineTo(d * 7, -72 + Math.abs(d) * 2); ctx.stroke();
-  }
-
-  // bandana
-  ctx.fillStyle = bandana;
-  ctx.beginPath(); ctx.arc(0, -85, 9.5, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
+  // cabelo preto normal
+  ctx.fillStyle = hair;
+  ctx.beginPath(); ctx.arc(0, -84, 9.5, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
 
   // barbicha rala
   ctx.strokeStyle = '#3a2b1c';
