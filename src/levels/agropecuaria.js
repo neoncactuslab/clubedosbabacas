@@ -353,8 +353,8 @@ export var introDialogue = {
     n2: {
       speaker: '{name}', text: 'Hoje esse barbudo fedorento vai aprender que preço bom é preço justo!',
       choices: [
-        { label: 'Vamos com tudo!', next: null },
-        { label: 'Vou regatear ele até ele tomar banho!', next: null }
+        { label: 'Vou dar um banho de Wap nesse safado!', next: null },
+        { label: 'Vou fazê-lo voltar pro Guareí!', next: null }
       ]
     }
   }
@@ -363,12 +363,12 @@ export var introDialogue = {
 export var preBossDialogue = {
   start: 'p1',
   nodes: {
-    p1: { speaker: 'Juninho Guareí', text: 'Preço é preço, e hoje o preço da porrada subiu!', next: 'p2' },
+    p1: { speaker: 'Juninho Guareí', text: 'Nem venha me pedir fiado!', next: 'p2' },
     p2: {
       speaker: '{name}', text: '',
       choices: [
-        { label: 'Toma banho, animal!', next: 'p3' },
-        { label: 'Isso é assalto, não agropecuária!', next: 'p3' }
+        { label: 'Tem vitamina pra cavalo ou o Gui levou tudo?', next: 'p3' },
+        { label: 'Quando você vai parar de explorar funcionário?', next: 'p3' }
       ]
     },
     p3: { speaker: 'Narrador', text: 'Juninho agarra a vassoura mais perto e o combate começa!', next: null }
@@ -385,7 +385,7 @@ export var allyJoinDialogue = {
 export var victoryDialogue = {
   start: 'v1',
   nodes: {
-    v1: { speaker: 'Juninho Guareí', text: 'Tá... tá bom, café da manhã é por conta da casa...', next: 'v2' },
+    v1: { speaker: 'Juninho Guareí', text: 'Obrigado por tentar me ajudar Escorrega, vou deixar você almoçar a partir de agora...', next: 'v2' },
     v2: { speaker: '{name}', text: 'Vamos para a próxima fase enfrentar o próximo babaca!', next: null }
   }
 };
@@ -590,7 +590,7 @@ export function drawBoss(ctx, b) {
     ctx.fillText('🤢', cx - 8, baseY - 88 * squash);
   }
 
-  drawMiniHpBar(ctx, b.x - 4, b.y - 14, b.w + 8, b.hp / b.maxHp, '#ff5d73');
+  drawMiniHpBar(ctx, b.x - 4, b.y - 44, b.w + 8, b.hp / b.maxHp, '#ff5d73');
 }
 
 // ---------- Desenho: Escorrega ----------
