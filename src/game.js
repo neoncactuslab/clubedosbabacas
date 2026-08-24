@@ -49,6 +49,9 @@ function loadLevelEntities() {
   game.boss = level.createBoss(game.player.level);
   game.bossApi = { step: level.stepBoss, attackHitbox: level.bossAttackHitbox, hit: level.hitBoss, draw: level.drawBoss };
   game.boss2Spawned = false;
+  game.ally = null;
+  game.allyApi = null;
+  game.allySpawned = false;
   game.checkpointX = 0;
   game.camX = 0;
   game.bossIntroDone = false;
@@ -94,6 +97,39 @@ function stepBossArrival(dt) {
     game.phase = 'dialogue';
     runDialogue(level.akioIntroDialogue, { name: game.player.name }, dialogueUi, function () {
       game.boss.asleep = false;
+      game.phase = 'playing';
+    });
+  }
+}
+
+// Alguns bosses chamam reforço no meio da luta (ex: Escorrega entra quando
+// o Juninho chega em 50% de vida), em vez de aparecer depois do boss
+// principal cair. Reaproveita a mesma caminhada de entrada de fora da tela.
+function spawnAlly() {
+  game.allySpawned = true;
+  var p = game.player;
+  var ally = level.createAlly(p.level);
+
+  var minX = level.BOSS_ARENA_MIN_X != null ? level.BOSS_ARENA_MIN_X : 0;
+  ally.x = game.camX + VIEW_W + 70;
+  ally.arriveTargetX = clamp(p.x + 160, minX, ally.x);
+  ally.vx = 0;
+
+  game.ally = ally;
+  game.allyApi = { step: level.stepAlly, attackHitbox: level.allyAttackHitbox, hit: level.hitAlly, draw: level.drawAlly };
+  game.phase = 'ally-arriving';
+}
+
+function stepAllyArrival(dt) {
+  var a = game.ally;
+  a.facing = -1;
+  a.vx = -ARRIVAL_SPEED;
+  a.x = Math.max(a.arriveTargetX, a.x - ARRIVAL_SPEED * dt);
+  if (a.x <= a.arriveTargetX) {
+    a.vx = 0;
+    game.phase = 'dialogue';
+    runDialogue(level.allyJoinDialogue, { name: game.player.name }, dialogueUi, function () {
+      game.ally.asleep = false;
       game.phase = 'playing';
     });
   }
@@ -283,6 +319,10 @@ function step(dt) {
     stepBossArrival(dt);
     return;
   }
+  if (game.phase === 'ally-arriving') {
+    stepAllyArrival(dt);
+    return;
+  }
   if (game.phase !== 'playing') return;
   game.t += dt;
 
@@ -323,6 +363,22 @@ function step(dt) {
     }
   }
 
+  // aliado que reforça o boss principal quando ele chega na metade da vida
+  if (level.createAlly && !game.allySpawned && game.boss.alive && !game.boss.asleep &&
+      game.boss.hp <= game.boss.maxHp * 0.5) {
+    spawnAlly();
+    return;
+  }
+
+  if (game.ally && !game.ally.asleep && game.ally.alive) {
+    game.allyApi.step(game.ally, p, level.platforms, dt);
+    var hbAlly = game.allyApi.attackHitbox(game.ally);
+    if (hbAlly && !game.ally.hitDone && aabb(p.x, p.y, p.w, p.h, hbAlly.x, hbAlly.y, hbAlly.w, hbAlly.h)) {
+      if (damagePlayer(p, hbAlly.damage)) showToast(hbAlly.message || 'Toma essa!');
+      game.ally.hitDone = true;
+    }
+  }
+
   // ataque do jogador
   var atkBox = playerAttackHitbox(p);
   if (atkBox && !p.attackHitDone) {
@@ -341,6 +397,12 @@ function step(dt) {
       game.bossApi.hit(game.boss, p.attack, bossDir);
       p.attackHitDone = true;
     }
+    if (!p.attackHitDone && game.ally && !game.ally.asleep && game.ally.alive &&
+        aabb(atkBox.x, atkBox.y, atkBox.w, atkBox.h, game.ally.x, game.ally.y, game.ally.w, game.ally.h)) {
+      var allyDir = (game.ally.x + game.ally.w / 2) >= (p.x + p.w / 2) ? 1 : -1;
+      game.allyApi.hit(game.ally, p.attack, allyDir);
+      p.attackHitDone = true;
+    }
   }
 
   // queda em buraco
@@ -357,7 +419,8 @@ function step(dt) {
     return;
   }
 
-  if (game.boss.defeated && game.phase === 'playing') {
+  var allyDoneOrAbsent = !game.ally || game.ally.defeated;
+  if (game.boss.defeated && allyDoneOrAbsent && game.phase === 'playing') {
     if (game.boss2Spawned) {
       // este boss.defeated é o segundo boss (ex: Akio) -- sem diálogo de vitória próprio
       finishLevel();
@@ -478,6 +541,7 @@ function render() {
   for (var g = 0; g < game.enemies.length; g++) level.drawGrunt(ctx, game.enemies[g]);
 
   if (game.boss) game.bossApi.draw(ctx, game.boss);
+  if (game.ally) game.allyApi.draw(ctx, game.ally);
   if (game.player) drawPlayer(game.player);
 
   ctx.restore();

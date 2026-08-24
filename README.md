@@ -75,11 +75,23 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 3. Criar o boss: `createBoss(level)` + `stepBoss(...)` com a IA própria dele
    (siga o padrão de estados de `vilaRosa.js`/`rechan.js`: telegraph →
    active → recover, mais um estado "vulnerável" que cicla a cada 3ª ação).
-   Boss surpresa/duplo (tipo o Akio depois do Toyoshi): exporte também
-   `createBoss2`, `stepBoss2`, `bossAttackHitbox2`, `hitBoss2`, `drawBoss2` e
-   `akioIntroDialogue` (mesmo formato, nomes livres) — o `game.js` já detecta
-   `level.createBoss2` sozinho e encadeia os dois sem precisar de trigger de
-   área pro segundo.
+   Duas variações de "boss em dupla" já prontas no motor, escolha a que
+   fizer sentido pra história:
+   - **Sequencial** (tipo o Akio depois do Toyoshi — só aparece quando o
+     primeiro morre): exporte `createBoss2`, `stepBoss2`,
+     `bossAttackHitbox2`, `hitBoss2`, `drawBoss2` e um diálogo de entrada
+     (mesmo formato, nomes livres). `game.js` detecta `level.createBoss2`
+     sozinho.
+   - **Reforço no meio da luta** (tipo o Escorrega, que entra quando o
+     Juninho chega em 50% de vida): exporte `createAlly`, `stepAlly`,
+     `allyAttackHitbox`, `hitAlly`, `drawAlly` e `allyJoinDialogue`. O
+     `game.js` detecta `level.createAlly` e o aciona sozinho quando
+     `boss.hp <= boss.maxHp * 0.5` — os dois ficam lutando ao mesmo tempo,
+     e a fase só termina quando ambos caem (em qualquer ordem).
+   Em ambos os casos, o boss extra entra **andando de fora da câmera**
+   (não simplesmente aparece) até um ponto perto do jogador, e só aí o
+   diálogo dispara — reaproveita `ARRIVAL_SPEED`/`stepBossArrival` (ou
+   `stepAllyArrival`) já prontos em `game.js`.
 4. Escrever os diálogos (`introDialogue`, `preBossDialogue`,
    `victoryDialogue`) no formato de árvore usado por `dialogue.js`.
 5. Desenhar o visual da fase: `renderBackground(ctx, camX, VIEW_W, VIEW_H)`,
@@ -96,8 +108,9 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 | # | Bairro | Boss | Status |
 |---|--------|------|--------|
 | 1 | Vila Rosa | Pandoval (Sandoval) | ✅ Pronta |
-| 2 | Rechan | Toyoshi | ✅ Pronta |
-| 3 | — | — | Planejada |
+| 2 | Rechan | Toyoshi (+ Akio, boss sequencial) | ✅ Pronta |
+| 3 | Agropecuária Rechan | Juninho Guareí (+ Escorrega, reforço em 50% de vida) | ✅ Pronta |
+| 4 | — | — | Planejada |
 | ... | — | — | — |
 
 ## Hospedagem

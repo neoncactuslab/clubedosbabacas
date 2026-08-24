@@ -2,5 +2,6 @@
 // src/levels/, importar aqui e colocar na posição certa da lista.
 import * as vilaRosa from './vilaRosa.js';
 import * as rechan from './rechan.js';
+import * as agropecuaria from './agropecuaria.js';
 
-export var LEVELS = [vilaRosa, rechan];
+export var LEVELS = [vilaRosa, rechan, agropecuaria];
