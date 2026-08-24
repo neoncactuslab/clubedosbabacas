@@ -118,8 +118,9 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 | 1 | Vila Rosa | Pandoval (Sandoval) | ✅ Pronta |
 | 2 | Rechan | Toyoshi (+ Akio, boss sequencial) | ✅ Pronta |
 | 3 | Agropecuária Rechan | Juninho Guareí (+ Escorrega, reforço em 50% de vida) | ✅ Pronta |
-| 4 | Peruíbe | Léo Gobor ("Minhoquinha do MIB") | ✅ Pronta |
-| 5 | — | — | Planejada |
+| 4 | Peruíbe | Léo Gobor ("Minhoquinha do MIB", + Kannabis e Léo Gobor Verde) | ✅ Pronta |
+| 5 | Sorocaba (Suprema Poker) | Tanso, Leo Med e VinnyChaos | ✅ Pronta |
+| 6 | — | — | Planejada |
 | ... | — | — | — |
 
 ## Hospedagem

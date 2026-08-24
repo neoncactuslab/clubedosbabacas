@@ -255,7 +255,7 @@ const VOADORA_DMG = 14;
 export function createAlly(level) {
   return {
     name: 'Kannabis',
-    x: 3050, y: GROUND_Y - 54, w: 34, h: 54, vx: 0, vy: 0, onGround: false,
+    x: 3050, y: GROUND_Y - 58, w: 32, h: 58, vx: 0, vy: 0, onGround: false,
     facing: -1,
     hp: enemyHpForLevel(ALLY_BASE_HP, level),
     maxHp: enemyHpForLevel(ALLY_BASE_HP, level),
@@ -772,84 +772,83 @@ export function drawAlly(ctx, a) {
   var bandana = '#e0c23a';
 
   var walking = a.state === 'approach' && Math.abs(a.vx) > 5;
-  var strideA = walking ? Math.sin(a.x * 0.16) * 7 : 0;
-  var sway = chapado ? Math.sin(a.stateTimer * 5) * 4 : 0;
+  var strideA = walking ? Math.sin(a.x * 0.15) * 8 : 0;
+  var sway = chapado ? Math.sin(a.stateTimer * 5) * 5 : 0;
 
   ctx.save();
   ctx.translate(cx + sway, baseY);
   ctx.scale(a.facing, 1);
 
-  // pernas
-  drawLimb(ctx, -8, -28, -9 + strideA, -2, 6, pants, '#20191a');
-  drawLimb(ctx, 7, -28, 8 - strideA, -2, 6, pants, '#20191a');
+  // pernas compridas e finas -- mesma altura do Léo
+  drawLimb(ctx, -9, -34, -11 + strideA, -2, 7, pants, '#20191a');
+  drawLimb(ctx, 8, -34, 10 - strideA, -2, 7, pants, '#20191a');
 
   // bracos
-  if (a.state === 'telegraph-tapa' || a.state === 'active-tapa') {
-    var slap = a.state === 'active-tapa' ? 22 : 8;
-    drawLimb(ctx, -8, -50, -13 + strideA * 0.4, -30, 6, skin, null);
-    drawLimb(ctx, 8, -50, 12 + slap, -44, 6, skin, null);
-  } else if (a.state === 'active-voadora') {
-    drawLimb(ctx, -8, -50, -20, -46, 6, skin, null);
-    drawLimb(ctx, 8, -50, 20, -46, 6, skin, null);
+  var slap = 0;
+  if (a.state === 'telegraph-tapa') slap = 8;
+  if (a.state === 'active-tapa') slap = 30;
+  if (a.state === 'active-voadora' || a.state === 'telegraph-voadora') {
+    drawLimb(ctx, -10, -66, -20 + strideA * 0.4, -50, 6, skin, null);
+    drawLimb(ctx, 10, -66, 20, -50, 6, skin, null);
   } else {
-    drawLimb(ctx, -8, -50, -12 + strideA * 0.4, -30, 6, skin, null);
-    drawLimb(ctx, 8, -50, 12 - strideA * 0.4, -30, 6, skin, null);
+    drawLimb(ctx, -10, -66, -14 + strideA * 0.4, -44, 6, skin, null);
+    drawLimb(ctx, 10, -66, 16 + slap, -60, 6, skin, null);
   }
 
   // tronco (camisa rasta, meio caida)
   ctx.fillStyle = shirt;
-  roundRect(ctx, -8, -54, 16, 26, 4);
+  roundRect(ctx, -9, -70, 18, 32, 5);
   ctx.fill();
   ctx.fillStyle = '#c1462a';
-  ctx.fillRect(-8, -40, 16, 3);
+  ctx.fillRect(-9, -52, 18, 3);
 
   // cabeca
   ctx.fillStyle = skin;
-  ctx.beginPath(); ctx.arc(0, -60, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -80, 9, 0, Math.PI * 2); ctx.fill();
 
   // dreads saindo por baixo da bandana
   ctx.strokeStyle = '#1c1410';
   ctx.lineWidth = 2.4;
   ctx.lineCap = 'round';
   for (var d = -1; d <= 1; d++) {
-    ctx.beginPath(); ctx.moveTo(d * 5, -63); ctx.lineTo(d * 6, -54 + Math.abs(d) * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(d * 6, -83); ctx.lineTo(d * 7, -72 + Math.abs(d) * 2); ctx.stroke();
   }
 
   // bandana
   ctx.fillStyle = bandana;
-  ctx.beginPath(); ctx.arc(0, -64, 8.5, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -85, 9.5, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
 
   // barbicha rala
   ctx.strokeStyle = '#3a2b1c';
   ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(-1, -55); ctx.lineTo(1, -53); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(1, -75); ctx.lineTo(3, -73); ctx.stroke();
 
   // olhos bem caidos (chapadao)
   ctx.strokeStyle = '#2a2320';
   ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(2, -60); ctx.lineTo(5.5, -59.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(2, -81); ctx.lineTo(6, -80.5); ctx.stroke();
 
   // baseadinho proprio
   ctx.fillStyle = '#f4efe4';
-  ctx.fillRect(7, -58, 8, 2.2);
+  ctx.fillRect(9, -78, 10, 2.4);
   ctx.fillStyle = '#c1462a';
-  ctx.fillRect(15, -58, 1.8, 2.2);
+  ctx.fillRect(19, -78, 2, 2.4);
 
   ctx.restore();
 
   // fumaca -- o Kannabis tambem sempre ta com uma nuvenzinha
   var smokeTA = performance.now() / 450;
-  var mouthXA = cx + a.facing * 17;
-  var mouthYA = baseY - 58;
+  var mouthXA = cx + a.facing * 20;
+  var mouthYA = baseY - 78;
   ctx.strokeStyle = 'rgba(230,230,230,0.5)';
   ctx.lineWidth = 2.6;
   ctx.lineCap = 'round';
   for (var k = 0; k < 2; k++) {
     var tA = (smokeTA + k * 0.7) % 1.6;
-    var sxA = mouthXA + a.facing * tA * 12 + Math.sin(tA * 4 + k) * 4;
-    var syA = mouthYA - tA * 18;
+    var sxA = mouthXA + a.facing * tA * 13 + Math.sin(tA * 4 + k) * 4;
+    var syA = mouthYA - tA * 20;
     ctx.beginPath();
-    ctx.arc(sxA, syA, 2 + tA * 2.4, 0, Math.PI * 2);
+    ctx.arc(sxA, syA, 2 + tA * 2.6, 0, Math.PI * 2);
     ctx.stroke();
   }
 
@@ -857,16 +856,16 @@ export function drawAlly(ctx, a) {
     ctx.strokeStyle = 'rgba(255,93,115,0.85)';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(cx + a.facing * 28, baseY - 44, 12, 0, Math.PI * 2);
+    ctx.arc(cx + a.facing * 34, baseY - 50, 13, 0, Math.PI * 2);
     ctx.stroke();
   }
   if (chapado) {
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = '16px sans-serif';
-    ctx.fillText('💭', cx - 7, baseY - 78);
+    ctx.font = '18px sans-serif';
+    ctx.fillText('💭', cx - 8, baseY - 96);
   }
 
-  drawMiniHpBar(ctx, a.x - 3, a.y - 30, a.w + 6, a.hp / a.maxHp, '#ff5d73');
+  drawMiniHpBar(ctx, a.x - 4, a.y - 48, a.w + 8, a.hp / a.maxHp, '#ff5d73');
 }
 
 // ---------- Desenho: Léo Gobor Verde ----------
