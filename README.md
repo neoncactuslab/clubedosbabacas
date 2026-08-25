@@ -25,7 +25,8 @@ mesmo que leve uma semana por fase. Não é pra ser um jogo longo: o alvo é
 
 - **A / D** — mover para os lados
 - **Espaço** — pular
-- **1 (teclado numérico / Num Lock)** — bater (corpo a corpo). Deixamos o
+- **1 (teclado numérico / Num Lock) ou P** — bater (corpo a corpo). As duas
+  teclas fazem a mesma coisa, porque nem todo teclado tem numpad. Deixamos o
   Num 2 e o Num 3 livres de propósito, pra dar pra adicionar outros golpes
   no futuro sem reorganizar os controles.
 
