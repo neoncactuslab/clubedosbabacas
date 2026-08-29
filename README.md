@@ -124,9 +124,18 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
    Deixe os projéteis **lentos** de propósito, pra dar pra pular por cima.
    Pra anunciar um momento pontual (tipo "sacou a arma") sem travar o
    combate numa caixa de diálogo, é só setar `boss.pendingMessage` — o
-   `game.js` mostra como toast e limpa sozinho.
+   `game.js` mostra como toast e limpa sozinho. Se o momento merecer uma
+   caixa de diálogo completa (com botão de continuar, travando o jogo até
+   o jogador fechar), use `boss.pendingDialogue` (mesmo formato de árvore
+   de sempre) — e, se o boss precisar reagir depois que a caixa fechar
+   (ex: dar um salto), põe a reação em `boss.onDialogueResolved`, uma
+   função que o `game.js` chama e descarta sozinho.
 4. Escrever os diálogos (`introDialogue`, `preBossDialogue`,
-   `victoryDialogue`) no formato de árvore usado por `dialogue.js`.
+   `victoryDialogue`) no formato de árvore usado por `dialogue.js`. Se a
+   fase for (por enquanto) a última do jogo e merecer um encerramento de
+   verdade, exporte também `endingTitle`/`endingText` — o `game.js` troca
+   automaticamente o popup padrão de "mais fases em breve" por uma tela
+   especial e mais bonita quando não há próxima fase cadastrada.
 5. Desenhar o visual da fase: `renderBackground(ctx, camX, VIEW_W, VIEW_H)`,
    `drawPlatform(ctx, pl)`, `drawGrunt(ctx, g)`, `drawBoss(ctx, b)` — use os
    helpers de `renderUtils.js` (`roundRect`, `drawLimb`, `drawMiniHpBar`,
@@ -148,8 +157,7 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 | 6 | Rechan (o Ninho) | Alexandre, Welão e Guilherme (3 bosses no início/meio/fim) | ✅ Pronta |
 | 7 | Rechan (Reta Final) | Xuxinha e Johny "Boca de Bulbassauro" (2 bosses no meio/fim) | ✅ Pronta |
 | 8 | Centro de Itapetininga | Biit e Luquinha, os policiais (2 bosses sequenciais, com ataque à distância) | ✅ Pronta |
-| 9 | — | — | Planejada |
-| ... | — | — | — |
+| 9 | Academia do Arnaldinho | Arnaldinho, o rei dos babacas (fase final) | ✅ Pronta |
 
 ## Hospedagem
 

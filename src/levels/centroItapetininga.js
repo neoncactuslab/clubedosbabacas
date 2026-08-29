@@ -127,7 +127,8 @@ export function createBossBiit(level) {
     pendingDialogue: null,
     onDialogueResolved: null,
     projectiles: [],
-    rajadaSecondDone: false
+    rajadaSecondDone: false,
+    stuckTimer: 0
   };
 }
 
@@ -149,6 +150,7 @@ var ACTIVE_RAJADA_B = 0.5;
 var RECOVER_RAJADA_B = 0.55;
 var FLEE_SPEED_B = 66;
 var KEEP_DIST_B = 150;
+var STUCK_THRESHOLD_B = 0.5;
 var SALTO_TIME_B = 0.5;
 var SALTO_VX_B = 190;
 var SALTO_VY_B = 230;
@@ -269,10 +271,20 @@ export function stepBossBiit(boss, player, platforms, dt) {
         break;
       case 'afastando': {
         var distR = Math.abs(playerCenter - bossCenter);
-        if (distR < KEEP_DIST_B) {
+        var cantFleeB = distR < KEEP_DIST_B;
+        if (cantFleeB) {
           boss.vx = -boss.facing * FLEE_SPEED_B;
+          boss.stuckTimer += dt;
         } else {
+          boss.stuckTimer = 0;
+        }
+        // se o jogador gruda nele (corpo a corpo) e não deixa distância
+        // sobrar, ele desiste de fugir depois de um tempinho e atira
+        // mesmo à queima-roupa -- sem essa válvula de escape ele fica
+        // preso pra sempre tentando fugir e nunca revida
+        if (!cantFleeB || boss.stuckTimer > STUCK_THRESHOLD_B) {
           boss.vx = 0;
+          boss.stuckTimer = 0;
           boss.actionCount += 1;
           if (boss.actionCount % 3 === 0) {
             setStateB(boss, 'veiasaltadas', VEIAS_TIME_B);
@@ -515,7 +527,8 @@ export function createBossLuquinha(level) {
     knockbackTimer: 0,
     knockbackVx: 0,
     projectiles: [],
-    rajadaSecondDone: false
+    rajadaSecondDone: false,
+    stuckTimer: 0
   };
 }
 
@@ -528,6 +541,7 @@ var RECOVER_RAJADA_L = 0.5;
 var VEIAS_TIME_L = 1.5;
 var FLEE_SPEED_L = 72;
 var KEEP_DIST_L = 160;
+var STUCK_THRESHOLD_L = 0.5;
 
 function setStateL(boss, state, duration) {
   boss.state = state;
@@ -548,10 +562,18 @@ export function stepBossLuquinha(boss, player, platforms, dt) {
   switch (boss.state) {
     case 'afastando': {
       var dist = Math.abs(playerCenter - bossCenter);
-      if (dist < KEEP_DIST_L) {
+      var cantFleeL = dist < KEEP_DIST_L;
+      if (cantFleeL) {
         boss.vx = -boss.facing * FLEE_SPEED_L;
+        boss.stuckTimer += dt;
       } else {
+        boss.stuckTimer = 0;
+      }
+      // mesma válvula de escape do Biit -- se o jogador não deixar
+      // distância sobrar, ele para de tentar fugir e atira mesmo colado
+      if (!cantFleeL || boss.stuckTimer > STUCK_THRESHOLD_L) {
         boss.vx = 0;
+        boss.stuckTimer = 0;
         boss.actionCount += 1;
         if (boss.actionCount % 3 === 0) {
           setStateL(boss, 'tremendo', VEIAS_TIME_L);

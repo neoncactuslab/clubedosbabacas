@@ -280,6 +280,40 @@ html, body {
   margin-bottom: 18px;
 }
 
+/* Tela especial de fim de jogo -- mais "bonita" que o popup padrão de fase
+   concluída, reservada pro encerramento da história (ver level.endingTitle) */
+#overlay-final-ending {
+  background: radial-gradient(ellipse at 50% 32%, rgba(255,196,90,0.3) 0%, rgba(20,16,14,0.97) 72%);
+}
+.panel-final {
+  max-width: 520px;
+  background: linear-gradient(180deg, #fff8ef, #ffe6b3);
+  border: 3px solid #caa23a;
+  box-shadow: 0 30px 90px -18px rgba(202,162,58,0.55), 0 0 0 6px rgba(255,214,120,0.18);
+  animation: final-glow 2.6s ease-in-out infinite;
+}
+@keyframes final-glow {
+  0%, 100% { box-shadow: 0 30px 90px -18px rgba(202,162,58,0.55), 0 0 0 6px rgba(255,214,120,0.18); }
+  50% { box-shadow: 0 30px 100px -14px rgba(202,162,58,0.75), 0 0 0 9px rgba(255,214,120,0.28); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel-final { animation: none; }
+}
+.panel-final .eyebrow { color: #a9791f; }
+.panel-final h1 {
+  font-size: 38px;
+  background: linear-gradient(180deg, #ffd35d, #e0703f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.panel-final p { color: #7a6b4a; }
+.panel-final .credits {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  margin-top: -8px;
+}
+
 .field-label {
   display: block;
   text-align: left;

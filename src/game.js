@@ -168,12 +168,19 @@ function finishLevel() {
     completeTitle.textContent = level.LEVEL_NAME + ' foi conquistada!';
     completeText.textContent = 'Bora pra próxima fase.';
     btnCompleteRestart.textContent = 'Próxima fase';
+    overlayComplete.hidden = false;
+  } else if (level.endingTitle) {
+    // fase marcada como encerramento da história (ex: o boss final) --
+    // mostra a tela especial em vez do popup padrão de "mais fases em breve"
+    finalEndingTitle.textContent = level.endingTitle;
+    finalEndingText.textContent = level.endingText;
+    overlayFinalEnding.hidden = false;
   } else {
     completeTitle.textContent = 'Todos os Babacas (por enquanto) foram domados!';
     completeText.textContent = 'Mais fases chegando em breve. Volte sempre pra treinar.';
     btnCompleteRestart.textContent = 'Jogar novamente';
+    overlayComplete.hidden = false;
   }
-  overlayComplete.hidden = false;
   game.phase = 'complete';
 }
 
@@ -286,11 +293,14 @@ bindHold(document.getElementById('btn-attack'), function () { keys.attack = true
 var overlaySplash = document.getElementById('overlay-splash');
 var overlayMenu = document.getElementById('overlay-menu');
 var overlayComplete = document.getElementById('overlay-complete');
+var overlayFinalEnding = document.getElementById('overlay-final-ending');
 var overlayGameover = document.getElementById('overlay-gameover');
 var nameInput = document.getElementById('name-input');
 var btnCompleteRestart = document.getElementById('btn-complete-restart');
 var completeTitle = document.querySelector('#overlay-complete h1');
 var completeText = document.getElementById('complete-text');
+var finalEndingTitle = document.getElementById('final-ending-title');
+var finalEndingText = document.getElementById('final-ending-text');
 
 setTimeout(function () {
   if (game.phase === 'splash') showMenu();
@@ -303,6 +313,7 @@ function showMenu() {
   game.phase = 'menu';
   overlaySplash.hidden = true;
   overlayComplete.hidden = true;
+  overlayFinalEnding.hidden = true;
   overlayGameover.hidden = true;
   document.getElementById('overlay-level-select').hidden = true;
   overlayMenu.hidden = false;
@@ -365,6 +376,7 @@ btnCompleteRestart.addEventListener('click', function () {
   if (hasNextLevel()) goToNextLevel();
   else showMenu();
 });
+document.getElementById('btn-final-restart').addEventListener('click', showMenu);
 document.getElementById('btn-gameover-restart').addEventListener('click', showMenu);
 
 // ---------- Diálogo ----------
