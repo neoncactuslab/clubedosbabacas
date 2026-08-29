@@ -239,8 +239,8 @@ export function hitBossXuxinha(boss, damage, knockbackDir) {
 var preBossDialogueXuxinha = {
   start: 'p1',
   nodes: {
-    p1: { speaker: '{name}', text: 'Fala Xuxinha! Bora resolver isso rapidinho?', next: 'p2' },
-    p2: { speaker: 'Xuxinha', text: 'Ai amore, cuidado que hoje eu tô com a make perfeita e não vou deixar ninguém estragar!', next: 'p3' },
+    p1: { speaker: '{name}', text: 'Xuxinha, vamos resolver essa treta agora mesmo!', next: 'p2' },
+    p2: { speaker: 'Xuxinha', text: 'Aiiiin, seu bruto... se acha que dá conta pode vir.', next: 'p3' },
     p3: { speaker: 'Narrador', text: 'Xuxinha ajeita o cabelo, estala os dedos e entra na dança... digo, na briga!', next: null }
   }
 };
@@ -248,7 +248,7 @@ var preBossDialogueXuxinha = {
 var victoryDialogueXuxinha = {
   start: 'v1',
   nodes: {
-    v1: { speaker: 'Xuxinha', text: 'Ai amore, você até que lutou com estilo... mas hoje o brilho é todo meu!', next: null }
+    v1: { speaker: 'Xuxinha', text: 'Depois dessa surra até virei bolsonarista.', next: null }
   }
 };
 
@@ -479,8 +479,14 @@ export function hitBossJohny(boss, damage, knockbackDir) {
 var preBossDialogueJohny = {
   start: 'p1',
   nodes: {
-    p1: { speaker: '{name}', text: 'Você deve ser o Johny... ouvi dizer que seu braço não é bem normal.', next: 'p2' },
-    p2: { speaker: 'Johny', text: 'Não é mesmo! Depois que bati de moto e destruí a moto do Escorrega, colocaram um monte de ferro aqui dentro... agora eu bato mais forte ainda, boca de bulbassauro nenhuma me segura!', next: 'p3' },
+    p1: {
+      speaker: '{name}', text: 'Boca de Bulbassauro, até que enfim nos encontramos, um dos maiores babacas do mundo.',
+      choices: [
+        { label: 'Brasileiro que torce pra argentina tem mais é que se foder mesmo.', next: 'p2' },
+        { label: 'Eu vou estragar você, mais do que você estragou a moto do Escorrega.', next: 'p2' }
+      ]
+    },
+    p2: { speaker: 'Jonão', text: 'Posso até apanhar, mas meu pau é maior que o seu.', next: 'p3' },
     p3: { speaker: 'Narrador', text: 'Johny estala o braço de ferro com um barulho metálico assustador e parte pra cima.', next: null }
   }
 };
