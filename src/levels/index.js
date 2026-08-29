@@ -7,5 +7,6 @@ import * as peruibe from './peruibe.js';
 import * as sorocaba from './sorocaba.js';
 import * as rechanNinho from './rechanNinho.js';
 import * as rechanLimpeza from './rechanLimpeza.js';
+import * as centroItapetininga from './centroItapetininga.js';
 
-export var LEVELS = [vilaRosa, rechan, agropecuaria, peruibe, sorocaba, rechanNinho, rechanLimpeza];
+export var LEVELS = [vilaRosa, rechan, agropecuaria, peruibe, sorocaba, rechanNinho, rechanLimpeza, centroItapetininga];

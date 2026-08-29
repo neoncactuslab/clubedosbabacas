@@ -56,7 +56,7 @@ function loadEncounter(i) {
   var enc = level.bossEncounters[i];
   game.encounterIndex = i;
   game.boss = enc.createBoss(game.player.level);
-  game.bossApi = { step: enc.stepBoss, attackHitbox: enc.bossAttackHitbox, hit: enc.hitBoss, draw: enc.drawBoss };
+  game.bossApi = { step: enc.stepBoss, attackHitbox: enc.bossAttackHitbox, hit: enc.hitBoss, draw: enc.drawBoss, projectileHitboxes: enc.bossProjectileHitboxes };
   game.bossIntroDone = false;
 }
 
@@ -70,7 +70,7 @@ function loadLevelEntities() {
     loadEncounter(0);
   } else {
     game.boss = level.createBoss(game.player.level);
-    game.bossApi = { step: level.stepBoss, attackHitbox: level.bossAttackHitbox, hit: level.hitBoss, draw: level.drawBoss };
+    game.bossApi = { step: level.stepBoss, attackHitbox: level.bossAttackHitbox, hit: level.hitBoss, draw: level.drawBoss, projectileHitboxes: level.bossProjectileHitboxes };
     game.bossIntroDone = false;
   }
   game.boss2Spawned = false;
@@ -106,7 +106,7 @@ function spawnBoss2() {
   boss.vx = 0;
 
   game.boss = boss;
-  game.bossApi = { step: level.stepBoss2, attackHitbox: level.bossAttackHitbox2, hit: level.hitBoss2, draw: level.drawBoss2 };
+  game.bossApi = { step: level.stepBoss2, attackHitbox: level.bossAttackHitbox2, hit: level.hitBoss2, draw: level.drawBoss2, projectileHitboxes: level.bossProjectileHitboxes2 };
   updateHud();
   game.phase = 'boss2-arriving';
 }
@@ -140,7 +140,7 @@ function spawnAlly() {
   ally.vx = 0;
 
   game.ally = ally;
-  game.allyApi = { step: level.stepAlly, attackHitbox: level.allyAttackHitbox, hit: level.hitAlly, draw: level.drawAlly };
+  game.allyApi = { step: level.stepAlly, attackHitbox: level.allyAttackHitbox, hit: level.hitAlly, draw: level.drawAlly, projectileHitboxes: level.allyProjectileHitboxes };
   game.phase = 'ally-arriving';
 }
 
@@ -427,6 +427,24 @@ function step(dt) {
     if (hb && !game.boss.hitDone && aabb(p.x, p.y, p.w, p.h, hb.x, hb.y, hb.w, hb.h)) {
       if (damagePlayer(p, hb.damage)) showToast(hb.message || 'Toma essa!');
       game.boss.hitDone = true;
+    }
+    // alguns bosses atiram (ex: policiais) -- cada projétil viaja sozinho e só
+    // pode acertar uma vez, então isso fica fora do gate de hitDone acima
+    if (game.bossApi.projectileHitboxes) {
+      var projs = game.bossApi.projectileHitboxes(game.boss);
+      for (var pi = 0; pi < projs.length; pi++) {
+        var proj = projs[pi];
+        if (!proj.hit && aabb(p.x, p.y, p.w, p.h, proj.x, proj.y, proj.w, proj.h)) {
+          if (damagePlayer(p, proj.damage)) showToast(proj.message || 'Bang!');
+          proj.hit = true;
+        }
+      }
+    }
+    // ganho narrativo pontual (ex: "sacou a arma") sem precisar travar o
+    // combate numa caixa de diálogo -- o boss só marca a mensagem pendente
+    if (game.boss.pendingMessage) {
+      showToast(game.boss.pendingMessage);
+      game.boss.pendingMessage = null;
     }
   }
 

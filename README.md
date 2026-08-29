@@ -30,8 +30,11 @@ mesmo que leve uma semana por fase. Não é pra ser um jogo longo: o alvo é
   Num 2 e o Num 3 livres de propósito, pra dar pra adicionar outros golpes
   no futuro sem reorganizar os controles.
 
-Todos os personagens (protagonista, inimigos e bosses) lutam exclusivamente
-corpo a corpo — sem ataques à distância.
+O protagonista e a esmagadora maioria dos inimigos/bosses lutam exclusivamente
+corpo a corpo — sem ataques à distância. A única exceção são bosses com
+justificativa narrativa pra atirar (ex: os policiais Biit e Luquinha, na fase
+8) — nesse caso os projéteis são sempre lentos o bastante pra dar pra pular
+por cima.
 
 ## Regra de progressão
 
@@ -111,6 +114,17 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
      `level.bossEncounters` sozinho e vai trocando o boss ativo conforme o
      jogador cruza cada `triggerX`, sem precisar de caminhada de entrada
      (cada boss já está parado na própria arena, esperando).
+
+   Um boss também pode **atirar** (única exceção à regra de "só corpo a
+   corpo", reservada pra casos como policiais — ex: Biit/Luquinha no Centro
+   de Itapetininga): exporte `bossProjectileHitboxes(boss)` (ou `2` pro
+   segundo boss) devolvendo `boss.projectiles`, uma lista de
+   `{ x, y, w, h, vx, damage, message, hit }` que o próprio `stepBoss` cria,
+   move e descarta (o `game.js` só verifica colisão e marca `hit = true`).
+   Deixe os projéteis **lentos** de propósito, pra dar pra pular por cima.
+   Pra anunciar um momento pontual (tipo "sacou a arma") sem travar o
+   combate numa caixa de diálogo, é só setar `boss.pendingMessage` — o
+   `game.js` mostra como toast e limpa sozinho.
 4. Escrever os diálogos (`introDialogue`, `preBossDialogue`,
    `victoryDialogue`) no formato de árvore usado por `dialogue.js`.
 5. Desenhar o visual da fase: `renderBackground(ctx, camX, VIEW_W, VIEW_H)`,
@@ -133,7 +147,8 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 | 5 | Sorocaba (Suprema Poker) | Tanso, Leo Med e VinnyChaos | ✅ Pronta |
 | 6 | Rechan (o Ninho) | Alexandre, Welão e Guilherme (3 bosses no início/meio/fim) | ✅ Pronta |
 | 7 | Rechan (Reta Final) | Xuxinha e Johny "Boca de Bulbassauro" (2 bosses no meio/fim) | ✅ Pronta |
-| 8 | — | — | Planejada |
+| 8 | Centro de Itapetininga | Biit e Luquinha, os policiais (2 bosses sequenciais, com ataque à distância) | ✅ Pronta |
+| 9 | — | — | Planejada |
 | ... | — | — | — |
 
 ## Hospedagem
