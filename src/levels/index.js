@@ -5,5 +5,6 @@ import * as rechan from './rechan.js';
 import * as agropecuaria from './agropecuaria.js';
 import * as peruibe from './peruibe.js';
 import * as sorocaba from './sorocaba.js';
+import * as rechanNinho from './rechanNinho.js';
 
-export var LEVELS = [vilaRosa, rechan, agropecuaria, peruibe, sorocaba];
+export var LEVELS = [vilaRosa, rechan, agropecuaria, peruibe, sorocaba, rechanNinho];

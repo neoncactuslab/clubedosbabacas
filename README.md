@@ -101,6 +101,16 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
    (não simplesmente aparece) até um ponto perto do jogador, e só aí o
    diálogo dispara — reaproveita `ARRIVAL_SPEED`/`stepBossArrival` (ou
    `stepAllyArrival`) já prontos em `game.js`.
+   - **Vários bosses espalhados pela fase** (tipo o Rechan revisitado, com
+     um boss no início, outro no meio e outro no final): em vez de
+     `createBoss`/`stepBoss`/etc. no nível raiz do arquivo, exporte
+     `bossEncounters` — uma lista ordenada de objetos
+     `{ triggerX, createBoss, stepBoss, bossAttackHitbox,
+     bossDamageMultiplier, hitBoss, drawBoss, preBossDialogue,
+     victoryDialogue }`, um por encontro. O `game.js` detecta
+     `level.bossEncounters` sozinho e vai trocando o boss ativo conforme o
+     jogador cruza cada `triggerX`, sem precisar de caminhada de entrada
+     (cada boss já está parado na própria arena, esperando).
 4. Escrever os diálogos (`introDialogue`, `preBossDialogue`,
    `victoryDialogue`) no formato de árvore usado por `dialogue.js`.
 5. Desenhar o visual da fase: `renderBackground(ctx, camX, VIEW_W, VIEW_H)`,
@@ -121,7 +131,8 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 | 3 | Agropecuária Rechan | Juninho Guareí (+ Escorrega, reforço em 50% de vida) | ✅ Pronta |
 | 4 | Peruíbe | Léo Gobor ("Minhoquinha do MIB", + Kannabis e Léo Gobor Verde) | ✅ Pronta |
 | 5 | Sorocaba (Suprema Poker) | Tanso, Leo Med e VinnyChaos | ✅ Pronta |
-| 6 | — | — | Planejada |
+| 6 | Rechan (o Ninho) | Alexandre, Welão e Guilherme (3 bosses no início/meio/fim) | ✅ Pronta |
+| 7 | — | — | Planejada |
 | ... | — | — | — |
 
 ## Hospedagem

@@ -41,20 +41,44 @@ var game = {
   checkpointX: 0,
   camX: 0,
   t: 0,
-  bossIntroDone: false
+  bossIntroDone: false,
+  encounterIndex: 0
 };
+
+// Algumas fases (ex: o retorno ao Rechan) têm vários bosses espalhados ao
+// longo do percurso (início/meio/fim) em vez de um só. Nesses casos o nível
+// exporta `bossEncounters`: uma lista ordenada de { triggerX, createBoss,
+// stepBoss, bossAttackHitbox, bossDamageMultiplier, hitBoss, drawBoss,
+// preBossDialogue, victoryDialogue }. Cada encontro reaproveita o mesmo slot
+// `game.boss`/`game.bossApi` do boss único de sempre -- só troca de conteúdo
+// conforme o jogador avança e derrota cada um.
+function loadEncounter(i) {
+  var enc = level.bossEncounters[i];
+  game.encounterIndex = i;
+  game.boss = enc.createBoss(game.player.level);
+  game.bossApi = { step: enc.stepBoss, attackHitbox: enc.bossAttackHitbox, hit: enc.hitBoss, draw: enc.drawBoss };
+  game.bossIntroDone = false;
+}
+
+function currentEncounter() {
+  return level.bossEncounters ? level.bossEncounters[game.encounterIndex] : null;
+}
 
 function loadLevelEntities() {
   game.enemies = level.createEnemies(game.player.level);
-  game.boss = level.createBoss(game.player.level);
-  game.bossApi = { step: level.stepBoss, attackHitbox: level.bossAttackHitbox, hit: level.hitBoss, draw: level.drawBoss };
+  if (level.bossEncounters) {
+    loadEncounter(0);
+  } else {
+    game.boss = level.createBoss(game.player.level);
+    game.bossApi = { step: level.stepBoss, attackHitbox: level.bossAttackHitbox, hit: level.hitBoss, draw: level.drawBoss };
+    game.bossIntroDone = false;
+  }
   game.boss2Spawned = false;
   game.ally = null;
   game.allyApi = null;
   game.allySpawned = false;
   game.checkpointX = 0;
   game.camX = 0;
-  game.bossIntroDone = false;
   game.player.x = level.PLAYER_START.x;
   game.player.y = level.PLAYER_START.y;
   game.player.vx = 0;
@@ -382,12 +406,16 @@ function step(dt) {
     }
   }
 
-  // boss
+  // boss (numa fase com vários encontros, cada um tem seu próprio ponto de
+  // disparo e diálogo -- fora isso é exatamente o mesmo fluxo de sempre)
+  var enc = currentEncounter();
+  var arenaX = enc ? enc.triggerX : level.BOSS_ARENA_X;
+  var preBossDialogue = enc ? enc.preBossDialogue : level.preBossDialogue;
   game.bossApi.step(game.boss, p, level.platforms, dt);
-  if (!game.bossIntroDone && p.x >= level.BOSS_ARENA_X - 20 && game.boss.asleep) {
+  if (!game.bossIntroDone && p.x >= arenaX - 20 && game.boss.asleep) {
     game.bossIntroDone = true;
     game.phase = 'dialogue';
-    runDialogue(level.preBossDialogue, { name: p.name }, dialogueUi, function () {
+    runDialogue(preBossDialogue, { name: p.name }, dialogueUi, function () {
       game.boss.asleep = false;
       game.phase = 'playing';
     });
@@ -466,7 +494,19 @@ function step(dt) {
       return;
     }
     game.phase = 'dialogue';
-    if (level.createBoss2) {
+    if (level.bossEncounters) {
+      var finishedEnc = currentEncounter();
+      var nextIndex = game.encounterIndex + 1;
+      var hasNextEncounter = nextIndex < level.bossEncounters.length;
+      runDialogue(finishedEnc.victoryDialogue, { name: p.name }, dialogueUi, function () {
+        if (hasNextEncounter) {
+          loadEncounter(nextIndex);
+          game.phase = 'playing';
+        } else {
+          finishLevel();
+        }
+      });
+    } else if (level.createBoss2) {
       runDialogue(level.victoryDialogue, { name: p.name }, dialogueUi, spawnBoss2);
     } else {
       runDialogue(level.victoryDialogue, { name: p.name }, dialogueUi, finishLevel);
