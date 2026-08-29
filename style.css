@@ -314,6 +314,21 @@ html, body {
   margin-top: -8px;
 }
 
+/* Tela de derrota definitiva -- sem botão de continuar de propósito
+   (reservada pro boss final impossível de vencer) */
+#overlay-final-defeat {
+  background: radial-gradient(ellipse at 50% 32%, rgba(160,20,30,0.35) 0%, rgba(10,8,8,0.98) 74%);
+}
+.panel-final-defeat {
+  background: linear-gradient(180deg, #241a1a, #120d0d);
+  border: 3px solid #7a2a2a;
+  box-shadow: 0 30px 90px -18px rgba(160,20,30,0.5), 0 0 0 6px rgba(122,42,42,0.25);
+}
+.panel-final-defeat .eyebrow { color: #d9666a; }
+.panel-final-defeat h1 { color: #f2d3d3; }
+.panel-final-defeat p { color: #c9a8a8; margin-bottom: 14px; }
+.panel-final-defeat p:last-child { margin-bottom: 0; }
+
 .field-label {
   display: block;
   text-align: left;

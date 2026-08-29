@@ -295,12 +295,15 @@ var overlayMenu = document.getElementById('overlay-menu');
 var overlayComplete = document.getElementById('overlay-complete');
 var overlayFinalEnding = document.getElementById('overlay-final-ending');
 var overlayGameover = document.getElementById('overlay-gameover');
+var overlayFinalDefeat = document.getElementById('overlay-final-defeat');
 var nameInput = document.getElementById('name-input');
 var btnCompleteRestart = document.getElementById('btn-complete-restart');
 var completeTitle = document.querySelector('#overlay-complete h1');
 var completeText = document.getElementById('complete-text');
 var finalEndingTitle = document.getElementById('final-ending-title');
 var finalEndingText = document.getElementById('final-ending-text');
+var finalDefeatText1 = document.getElementById('final-defeat-text-1');
+var finalDefeatText2 = document.getElementById('final-defeat-text-2');
 
 setTimeout(function () {
   if (game.phase === 'splash') showMenu();
@@ -314,6 +317,7 @@ function showMenu() {
   overlaySplash.hidden = true;
   overlayComplete.hidden = true;
   overlayFinalEnding.hidden = true;
+  overlayFinalDefeat.hidden = true;
   overlayGameover.hidden = true;
   document.getElementById('overlay-level-select').hidden = true;
   overlayMenu.hidden = false;
@@ -530,8 +534,18 @@ function step(dt) {
   updateHud();
 
   if (p.dead) {
-    game.phase = 'gameover';
-    overlayGameover.hidden = false;
+    if (level.finalGameOverText1) {
+      // fase marcada como "sem volta" (ex: o boss final impossível de
+      // vencer) -- mostra a tela sem botão de continuar, o jogo acaba de
+      // verdade aqui
+      finalDefeatText1.textContent = level.finalGameOverText1;
+      finalDefeatText2.textContent = level.finalGameOverText2 || '';
+      overlayFinalDefeat.hidden = false;
+      game.phase = 'gameover';
+    } else {
+      game.phase = 'gameover';
+      overlayGameover.hidden = false;
+    }
     return;
   }
 

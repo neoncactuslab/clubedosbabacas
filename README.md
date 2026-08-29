@@ -135,7 +135,13 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
    fase for (por enquanto) a última do jogo e merecer um encerramento de
    verdade, exporte também `endingTitle`/`endingText` — o `game.js` troca
    automaticamente o popup padrão de "mais fases em breve" por uma tela
-   especial e mais bonita quando não há próxima fase cadastrada.
+   especial e mais bonita quando não há próxima fase cadastrada. Existe
+   também o caminho oposto, pra um boss propositalmente invencível (ex: o
+   Arnaldinho na fase 9): faça `hitBoss` nunca zerar `boss.alive`/
+   `boss.defeated` de verdade (só reabastecer `boss.hp`), e exporte
+   `finalGameOverText1`/`finalGameOverText2` — o `game.js` troca a tela de
+   derrota padrão (com botão de tentar de novo) por uma tela definitiva,
+   sem botão nenhum, quando o jogador morre nessa fase.
 5. Desenhar o visual da fase: `renderBackground(ctx, camX, VIEW_W, VIEW_H)`,
    `drawPlatform(ctx, pl)`, `drawGrunt(ctx, g)`, `drawBoss(ctx, b)` — use os
    helpers de `renderUtils.js` (`roundRect`, `drawLimb`, `drawMiniHpBar`,
