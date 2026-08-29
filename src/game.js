@@ -422,6 +422,25 @@ function step(dt) {
     return;
   }
 
+  // um boss pode travar o combate numa caixa de diálogo cheia no meio da
+  // luta (ex: "Biit saca a arma" ao perder metade da vida) -- ele só marca
+  // pendingDialogue, e opcionalmente onDialogueResolved pra reagir (ex: dar
+  // um salto pra trás) quando o jogador fechar a caixa com "Continuar"
+  if (game.boss.pendingDialogue) {
+    var bossDlg = game.boss.pendingDialogue;
+    game.boss.pendingDialogue = null;
+    game.phase = 'dialogue';
+    runDialogue(bossDlg, { name: p.name }, dialogueUi, function () {
+      if (game.boss.onDialogueResolved) {
+        var resolve = game.boss.onDialogueResolved;
+        game.boss.onDialogueResolved = null;
+        resolve();
+      }
+      game.phase = 'playing';
+    });
+    return;
+  }
+
   if (!game.boss.asleep && game.boss.alive) {
     var hb = game.bossApi.attackHitbox(game.boss);
     if (hb && !game.boss.hitDone && aabb(p.x, p.y, p.w, p.h, hb.x, hb.y, hb.w, hb.h)) {

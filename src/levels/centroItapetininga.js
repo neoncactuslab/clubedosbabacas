@@ -26,17 +26,20 @@ export const platforms = [
   { x: 2780, y: GROUND_Y - 30, w: 300, h: 30 },
   { x: 3140, y: GROUND_Y, w: 560, h: 80 },
   { x: 3760, y: GROUND_Y, w: 480, h: 80 },
-  { x: 4300, y: GROUND_Y, w: 400, h: 80 }
+  // arena final bem mais ampla que uma plataforma normal -- espaço livre,
+  // sem buraco no meio, pra dar espaço pro Biit fugir e pro jogador pular
+  // os tiros sem risco de cair de plataforma
+  { x: 4300, y: GROUND_Y, w: 900, h: 80 }
 ];
 
 export const checkpoints = [0, 620, 1200, 1560, 2180, 2780, 3140, 3760, 4300];
 
-export const LEVEL_W = 4700;
+export const LEVEL_W = 5200;
 export const PLAYER_START = { x: 60, y: GROUND_Y - 200 };
 
 export const BOSS_ARENA_X = 4300;
 export const BOSS_ARENA_MIN_X = 4300;
-export const BOSS_ARENA_MAX_X = 4700;
+export const BOSS_ARENA_MAX_X = 5200;
 
 export var GRUNT_HIT_TOAST = 'Ei, vai comprar ou não?!';
 export var PLATFORM_FILL = '#c9b896';
@@ -103,7 +106,7 @@ const TIRO_DMG_B = 13;
 export function createBossBiit(level) {
   return {
     name: 'Biit',
-    x: 4600, y: GROUND_Y - 50, w: 32, h: 50, vx: 0, vy: 0, onGround: false,
+    x: 5100, y: GROUND_Y - 50, w: 32, h: 50, vx: 0, vy: 0, onGround: false,
     facing: -1,
     hp: enemyHpForLevel(BASE_HP_B, level),
     maxHp: enemyHpForLevel(BASE_HP_B, level),
@@ -120,7 +123,9 @@ export function createBossBiit(level) {
     knockbackTimer: 0,
     knockbackVx: 0,
     gunDrawn: false,
-    pendingMessage: null,
+    gunTriggered: false,
+    pendingDialogue: null,
+    onDialogueResolved: null,
     projectiles: [],
     rajadaSecondDone: false
   };
@@ -144,6 +149,16 @@ var ACTIVE_RAJADA_B = 0.5;
 var RECOVER_RAJADA_B = 0.55;
 var FLEE_SPEED_B = 66;
 var KEEP_DIST_B = 150;
+var SALTO_TIME_B = 0.5;
+var SALTO_VX_B = 190;
+var SALTO_VY_B = 230;
+
+var drawGunDialogueBiit = {
+  start: 'g1',
+  nodes: {
+    g1: { speaker: 'Narrador', text: 'Ao estar perdendo a briga, Biit saca a arma.', next: null }
+  }
+};
 
 function setStateB(boss, state, duration) {
   boss.state = state;
@@ -178,11 +193,18 @@ export function stepBossBiit(boss, player, platforms, dt) {
 
   stepProjectiles(boss, dt, BOSS_ARENA_MIN_X, BOSS_ARENA_MAX_X);
 
-  if (!boss.gunDrawn && boss.hp <= boss.maxHp * 0.5) {
-    boss.gunDrawn = true;
-    boss.pendingMessage = 'Biit sacou a arma!';
-    setStateB(boss, 'afastando', 0);
-    boss.actionCount = 0;
+  if (!boss.gunDrawn && !boss.gunTriggered && boss.hp <= boss.maxHp * 0.5) {
+    boss.gunTriggered = true;
+    boss.vx = 0;
+    boss.pendingDialogue = drawGunDialogueBiit;
+    boss.onDialogueResolved = function () {
+      boss.gunDrawn = true;
+      boss.actionCount = 0;
+      setStateB(boss, 'saltando', SALTO_TIME_B);
+      boss.vx = -boss.facing * SALTO_VX_B;
+      boss.vy = -SALTO_VY_B;
+    };
+    return; // congela o Biit até o jogador fechar a caixa de diálogo
   }
 
   if (boss.stateTimer > 0) boss.stateTimer -= dt;
@@ -240,6 +262,11 @@ export function stepBossBiit(boss, player, platforms, dt) {
     }
   } else {
     switch (boss.state) {
+      case 'saltando':
+        // nao mexe no vx aqui -- deixa o impulso do salto pra tras rolar,
+        // a gravidade (aplicada mais embaixo) cuida da parte vertical
+        if (boss.stateTimer <= 0) setStateB(boss, 'afastando', 0);
+        break;
       case 'afastando': {
         var distR = Math.abs(playerCenter - bossCenter);
         if (distR < KEEP_DIST_B) {
@@ -346,9 +373,8 @@ export function hitBossBiit(boss, damage, knockbackDir) {
 export var preBossDialogue = {
   start: 'p1',
   nodes: {
-    p1: { speaker: '{name}', text: 'Você deve ser o Biit... já ouvi falar da sua fama de academia.', next: 'p2' },
-    p2: { speaker: 'Biit', text: 'SUA IRMÁ! Bora ver se você aguenta essas veias saltadas!', next: 'p3' },
-    p3: { speaker: 'Narrador', text: 'Biit estufa o peito, mostra o bíceps pra plateia imaginária, e parte pra cima.', next: null }
+    p1: { speaker: '{name}', text: 'Chega de ficar postando foto no espelho da academia, bora pra porrada!', next: 'p2' },
+    p2: { speaker: 'Biit', text: 'SUA IRMÃ! Vem então seu bosta.', next: null }
   }
 };
 
@@ -357,8 +383,7 @@ export var preBossDialogue = {
 export var victoryDialogue = {
   start: 'v1',
   nodes: {
-    v1: { speaker: 'Narrador', text: 'Biit cai sentado, a arma escorregando da mão... mas ainda consegue gritar por reforços!', next: 'v2' },
-    v2: { speaker: 'Biit', text: 'SUA IRMÁ, LUQUINHA! VEM AJUDAR AQUI!', next: null }
+    v1: { speaker: 'Biit', text: 'Copom, solicito reforços...', next: null }
   }
 };
 
@@ -615,7 +640,7 @@ export function hitBoss2(boss, damage, knockbackDir) {
 export var boss2IntroDialogue = {
   start: 'h1',
   nodes: {
-    h1: { speaker: 'Luquinha', text: 'Relaxa Joe, o parceiro aqui não deixa Joe nenhum na mão!', next: null }
+    h1: { speaker: 'Luquinha', text: 'Calma Joe, cheguei!', next: null }
   }
 };
 
