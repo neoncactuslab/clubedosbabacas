@@ -132,7 +132,8 @@ Cada fase é um arquivo independente em `src/levels/`, no mesmo formato de
 | 4 | Peruíbe | Léo Gobor ("Minhoquinha do MIB", + Kannabis e Léo Gobor Verde) | ✅ Pronta |
 | 5 | Sorocaba (Suprema Poker) | Tanso, Leo Med e VinnyChaos | ✅ Pronta |
 | 6 | Rechan (o Ninho) | Alexandre, Welão e Guilherme (3 bosses no início/meio/fim) | ✅ Pronta |
-| 7 | — | — | Planejada |
+| 7 | Rechan (Reta Final) | Xuxinha e Johny "Boca de Bulbassauro" (2 bosses no meio/fim) | ✅ Pronta |
+| 8 | — | — | Planejada |
 | ... | — | — | — |
 
 ## Hospedagem
